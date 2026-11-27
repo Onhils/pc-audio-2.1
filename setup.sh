@@ -1,12 +1,24 @@
 #!/usr/bin/env bash
-# Jedno tlačítko: nainstaluje a nastaví zvuk 2.1 (Mythos Four + Velodyne přes Pentu) na Fedoře.
+# Jedno tlačítko: nainstaluje a nastaví zvuk na Fedoře.
+#   2.1 = sloupy Mythos Four + Velodyne (přes Pentu)
+#   3.1 = navíc centr Mythos Three (Penta CENTER SPEAKER OUT)
 # Spouštět jako normální uživatel (ne sudo). Dá se spustit opakovaně – nic nerozbije.
 #
-#   ./setup.sh            # vše automaticky
+#   ./setup.sh            # stejný režim jako minule (poprvé 2.1)
+#   ./setup.sh 3.1        # přepnout na 3.1 (s centrem)
+#   ./setup.sh 2.1        # přepnout zpět na 2.1
 #   CARD=alsa_card.xxx ./setup.sh   # vynutit konkrétní zvukovou kartu
 set -euo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
+modefile="$HOME/.config/pc-audio-mode"
+mode=${1:-$(cat "$modefile" 2>/dev/null || echo 2.1)}
+case "$mode" in
+  2.1) surround=21 ;;
+  3.1) surround=51 ;;   # zvuková karta 3.1 neumí -> 5.1 profil, zadní kanály zůstanou nevyužité
+  *) echo "Neznámý režim '$mode'. Použij: ./setup.sh 2.1  nebo  ./setup.sh 3.1"; exit 1 ;;
+esac
+M="$here/modes/$mode"
 G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; B=$'\e[1m'; N=$'\e[0m'
 step() { echo; echo "${B}▶ $*${N}"; }
 ok()   { echo "  ${G}✓${N} $*"; }
@@ -29,33 +41,35 @@ systemctl --user is-active --quiet pipewire || die "PipeWire neběží. Je to Fe
 ok "PipeWire běží"
 
 # ---------------------------------------------------------------- 2. zvuková karta
-step "2/6 Hledám zvukovou kartu s výstupem 2.1"
-read -r card profile < <(pactl -f json list cards | python3 -c '
+echo "${B}Režim: $mode${N}"
+step "2/6 Hledám zvukovou kartu s výstupem $mode"
+read -r card profile < <(pactl -f json list cards | SURROUND=$surround python3 -c '
 import json, os, sys
 want = os.environ.get("CARD")
+sr = os.environ["SURROUND"]
 best = None
 for c in json.load(sys.stdin):
     if want and c["name"] != want:
         continue
     profs = c.get("profiles", {})
-    for p in ("output:analog-surround-21+input:analog-stereo", "output:analog-surround-21"):
+    for p in (f"output:analog-surround-{sr}+input:analog-stereo", f"output:analog-surround-{sr}"):
         if p in profs and profs[p].get("available", True):
             best = best or (c["name"], p)
             break
 print(*(best or ("", "")))
 ')
-[[ -n "$card" ]] || die "Nenašel jsem kartu s profilem Analog Surround 2.1. Jsou kabely zapojené vzadu do desky?"
+[[ -n "$card" ]] || die "Nenašel jsem kartu s profilem Analog Surround (analog-surround-$surround). Jsou kabely zapojené vzadu do desky?"
 pactl set-card-profile "$card" "$profile"
 ok "Karta: $card"
 ok "Profil: $profile"
 
 sink=""
 for _ in $(seq 1 20); do
-  sink=$(pactl list short sinks | awk '$2 ~ /analog-surround-21$/ {print $2; exit}')
+  sink=$(pactl list short sinks | awk -v s="analog-surround-$surround" '$2 ~ s"$" {print $2; exit}')
   [[ -n "$sink" ]] && break
   sleep 0.5
 done
-[[ -n "$sink" ]] || die "Výstup 2.1 se neobjevil."
+[[ -n "$sink" ]] || die "Výstup analog-surround-$surround se neobjevil."
 ok "Výstup: $sink"
 
 # ---------------------------------------------------------------- 3. konfigurace
@@ -63,21 +77,23 @@ step "3/6 Kopíruju nastavení"
 backup="$HOME/.config/pc-audio-backup-$(date +%Y%m%d-%H%M%S)"
 for f in pipewire/pipewire-pulse.conf.d/90-lfe-sub.conf pipewire/client.conf.d/90-lfe-sub.conf \
          pipewire/pipewire.conf.d/91-room-eq.conf wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf \
-         mpv/mpv.conf; do
+         mpv/mpv.conf pc-audio-mode; do
   if [[ -f "$HOME/.config/$f" ]]; then mkdir -p "$backup/$(dirname "$f")"; cp "$HOME/.config/$f" "$backup/$f"; fi
 done
-[[ -d "$backup" ]] && ok "Stará nastavení zazálohována do $backup"
+if [[ -d "$backup" ]]; then ok "Stará nastavení zazálohována do $backup"; fi
 
-install -Dm644 "$here/config/pipewire/pipewire-pulse.conf.d/90-lfe-sub.conf" "$HOME/.config/pipewire/pipewire-pulse.conf.d/90-lfe-sub.conf"
-install -Dm644 "$here/config/pipewire/client.conf.d/90-lfe-sub.conf"        "$HOME/.config/pipewire/client.conf.d/90-lfe-sub.conf"
-install -Dm644 "$here/config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf"
-install -Dm644 "$here/config/mpv/mpv.conf"                                  "$HOME/.config/mpv/mpv.conf"
+install -Dm644 "$M/90-lfe-sub.conf" "$HOME/.config/pipewire/pipewire-pulse.conf.d/90-lfe-sub.conf"
+install -Dm644 "$M/90-lfe-sub.conf" "$HOME/.config/pipewire/client.conf.d/90-lfe-sub.conf"
+install -Dm644 "$here/common/51-analog-no-suspend.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf"
+install -Dm644 "$M/mpv.conf" "$HOME/.config/mpv/mpv.conf"
 mkdir -p "$HOME/.config/pipewire/pipewire.conf.d"
-sed "s|@SINK@|$sink|" "$here/templates/91-room-eq.conf.in" > "$HOME/.config/pipewire/pipewire.conf.d/91-room-eq.conf"
+sed "s|@SINK@|$sink|" "$M/91-room-eq.conf.in" > "$HOME/.config/pipewire/pipewire.conf.d/91-room-eq.conf"
+echo "$mode" > "$modefile"
 ok "Basy do subu (dělení ~100 Hz)"
 ok "Ekvalizér místnosti (70 Hz, 120 Hz)"
 ok "Výstup se neuspává (žádné rušení v tichu)"
-ok "mpv: filmy 5.1/7.1 se správně smíchají do 2.1"
+ok "mpv: filmy 5.1/7.1 se správně smíchají do $mode"
+if [[ $mode == 3.1 ]]; then ok "Centr: bez basů (ty jdou do subu), dialogy z Mythos Three"; fi
 
 # ---------------------------------------------------------------- 4. restart
 step "4/6 Restartuju zvuk (na chvilku ztichne všechno, co hraje)"
@@ -92,21 +108,16 @@ retry pactl set-default-sink room_eq_21 || die "Nejde nastavit výchozí výstup
 retry pactl set-sink-volume room_eq_21 100% || warn "Hlasitost ekvalizéru nastav ručně na 100 %"
 retry pactl set-sink-volume "$sink" 100%    || warn "Hlasitost výstupu nastav ručně na 100 %"
 retry pactl set-sink-mute "$sink" 0         || true
-ok "Výchozí výstup: 2.1 EQ (místnost), hlasitost PC 100 %"
+ok "Výchozí výstup: $mode EQ (místnost), hlasitost PC 100 %"
 
 # ---------------------------------------------------------------- 5. autotest
 step "5/6 Kontroluju potichu, že basy jdou do subu (do reproduktorů nic nejde)"
-if out=$("$here/scripts/measure-lfe-response.sh" 2>&1); then
+if out=$("$here/scripts/selftest.sh" "$mode" 2>&1); then
   echo "$out" | sed 's/^/    /'
-  python3 - "$out" <<'EOF' || die "Basy do subu nejdou podle očekávání."
-import re, sys
-vals = {int(f): float(v) for f, v in re.findall(r"(\d+) Hz: LFE vs FL\s+(-?[\d.]+)", sys.argv[1])}
-assert vals.get(50, -99) > -2 and vals.get(150, 0) < -10, vals
-EOF
-  ok "Sub dostává basy pod ~100 Hz, výšky ne"
+  ok "Sub dostává basy, výšky ne$([[ $mode == 3.1 ]] && echo "; centr hraje jen dialogy/výšky, jeho basy jdou do subu")"
 else
-  warn "Autotest se nepovedl spustit (nevadí, nastavení je hotové):"
-  echo "$out" | tail -3 | sed 's/^/    /'
+  echo "$out" | sed 's/^/    /'
+  die "Autotest nesedí – kanály nejdou tam, kam mají."
 fi
 
 # ---------------------------------------------------------------- 6. hotovo
@@ -117,7 +128,8 @@ cat <<EOF
    1. Hlasitost v PC nech na 100 %. Hlasitost ovládej ovladačem od Penty.
    2. Spusť znovu prohlížeč / mpv, pokud běžely.
    3. Pusť si něco s basami – sub musí hrát.
-   4. Když něco nesedí (nový pokoj, přesunutý sub): ${B}./kalibrace.sh${N}
+   4. Když něco nesedí (nový pokoj, přesunutý sub, nový centr): ${B}./kalibrace.sh${N}
+   5. Přepnutí režimu: ${B}./setup.sh 2.1${N}  /  ${B}./setup.sh 3.1${N}
 
   Podrobný návod: NAVOD.md
 EOF

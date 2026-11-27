@@ -1,0 +1,77 @@
+# 3.1: sloupy Mythos Four (FL/FR), centr Mythos Three (FC), Velodyne (LFE).
+# Virtuální výstup "3.1 EQ (místnost)" -> ALSA 5.1 výstup (zadní kanály nepoužité).
+#
+# Bass management (dělá se tady, NE v PipeWire upmixu – ten v 3.1 vypnutý):
+#   LFE = LR4 dolní propust 100 Hz z (0.5*FL + 0.5*FR + 0.707*FC) + LFE stopa
+#   (LR4 @ 100 Hz = přesně stejná křivka jako lfe-cutoff=200 ve 2.1 -> kalibrace subu platí dál)
+#   centr: LR4 horní propust 100 Hz (malý reproduktor, basy jdou do subu)
+#   sloupy: plné pásmo (jako ve 2.1)
+# Ekvalizace místnosti (měřeno z postele 2026-11-27): 70 Hz -9 dB Q5, 120 Hz -10 dB Q4.
+context.modules = [
+{   name = libpipewire-module-filter-chain
+    args = {
+        node.description = "3.1 EQ (místnost)"
+        media.name       = "3.1 EQ (místnost)"
+        filter.graph = {
+            nodes = [
+                # rozbočení vstupů
+                { type = builtin name = in_fl label = copy }
+                { type = builtin name = in_fr label = copy }
+                { type = builtin name = in_fc label = copy }
+                # basy do subu
+                { type = builtin name = bass_sum label = mixer control = { "Gain 1" = 0.5 "Gain 2" = 0.5 "Gain 3" = 0.707 } }
+                { type = builtin name = bass_lp1 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = bass_lp2 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = lfe_sum  label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 1.0 } }
+                # centr bez basů
+                { type = builtin name = fc_hp1 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_hp2 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                # ekvalizace místnosti
+                { type = builtin name = fl70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = fl120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fr70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = fr120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fc120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = lfe70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = lfe120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+            ]
+            links = [
+                { output = "in_fl:Out" input = "fl70:In" }
+                { output = "in_fl:Out" input = "bass_sum:In 1" }
+                { output = "in_fr:Out" input = "fr70:In" }
+                { output = "in_fr:Out" input = "bass_sum:In 2" }
+                { output = "in_fc:Out" input = "fc_hp1:In" }
+                { output = "in_fc:Out" input = "bass_sum:In 3" }
+                { output = "fl70:Out"  input = "fl120:In" }
+                { output = "fr70:Out"  input = "fr120:In" }
+                { output = "fc_hp1:Out" input = "fc_hp2:In" }
+                { output = "fc_hp2:Out" input = "fc120:In" }
+                { output = "bass_sum:Out" input = "bass_lp1:In" }
+                { output = "bass_lp1:Out" input = "bass_lp2:In" }
+                { output = "bass_lp2:Out" input = "lfe_sum:In 1" }
+                { output = "lfe_sum:Out"  input = "lfe70:In" }
+                { output = "lfe70:Out"    input = "lfe120:In" }
+            ]
+            inputs  = [ "in_fl:In" "in_fr:In" "in_fc:In" "lfe_sum:In 2" ]
+            outputs = [ "fl120:Out" "fr120:Out" "fc120:Out" "lfe120:Out" ]
+        }
+        capture.props = {
+            node.name      = "room_eq_21"
+            media.class    = Audio/Sink
+            audio.channels = 4
+            audio.position = [ FL FR FC LFE ]
+            priority.session = 2000
+            session.suspend-timeout-seconds = 0
+        }
+        playback.props = {
+            node.name      = "room_eq_21.output"
+            node.passive   = true
+            audio.channels = 4
+            audio.position = [ FL FR FC LFE ]
+            target.object  = "@SINK@"
+            stream.dont-remix = true
+            session.suspend-timeout-seconds = 0
+        }
+    }
+}
+]

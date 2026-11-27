@@ -7,6 +7,7 @@ Režimy:
                                                      sub má úroveň, jakou dostává z hudby
   phase  out.wav [--tone 7] [--pause 5] [--lead 10]  A: 80+100 Hz, pauza (přepnout fázi), B: 80+100 Hz (stereo)
   steps  out.wav [--tone 8] [--lead 10]              tóny 30–120 Hz pro měření (stereo)
+  center out.wav [--seg 10] [--lead 3]               šum 500–2000 Hz: levý sloup, CENTR, pravý sloup (4 kanály FL,FR,FC,LFE)
 
 Přehrání:
   3kanálové:  pw-play --target room_eq_21 --channel-map FL,FR,LFE out.wav
@@ -35,6 +36,28 @@ def tone(seconds, amps, freq, fade=1200):
     return b"".join(out)
 
 
+def band_noise(seconds, lo=500.0, hi=2000.0, seed=1):
+    """Šum v pásmu lo–hi (2 kaskádní biquad pásmové propusti), RMS cca -20 dBFS."""
+    import random
+    rnd = random.Random(seed)
+    n = int(RATE * seconds)
+    f0 = math.sqrt(lo * hi); q = f0 / (hi - lo)
+    w0 = 2 * math.pi * f0 / RATE; al = math.sin(w0) / (2 * q); a0 = 1 + al
+    b0, b2, a1, a2 = al / a0, -al / a0, -2 * math.cos(w0) / a0, (1 - al) / a0
+    x = [rnd.uniform(-1, 1) for _ in range(n)]
+    for _ in range(2):
+        y = []; x1 = x2 = y1 = y2 = 0.0
+        for v in x:
+            o = b0 * v + b2 * x2 - a1 * y1 - a2 * y2
+            x2, x1, y2, y1 = x1, v, y1, o
+            y.append(o)
+        x = y
+    rms = math.sqrt(sum(v * v for v in x) / n)
+    g = (AMP / math.sqrt(2)) / (rms * 32768) * 32768
+    fade = 2400
+    return [g * v * min(1.0, i / fade, (n - i) / fade) for i, v in enumerate(x)]
+
+
 def silence(seconds, channels):
     return b"\0" * (int(RATE * seconds) * 2 * channels)
 
@@ -49,7 +72,7 @@ def write(path, channels, frames):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("mode", choices=["lfe", "align", "phase", "steps"])
+    p.add_argument("mode", choices=["lfe", "align", "phase", "steps", "center"])
     p.add_argument("out")
     p.add_argument("--freq", type=float, default=50)
     p.add_argument("--seconds", type=float, default=10)
@@ -77,6 +100,12 @@ def main():
         lead = 10 if a.lead is None else a.lead
         t = a.tone or 8
         write(a.out, 2, silence(lead, 2) + b"".join(tone(t, (AMP, AMP), f) + silence(2, 2) for f in STEPS))
+    elif a.mode == "center":
+        lead = 3 if a.lead is None else a.lead
+        nz = band_noise(a.seg)
+        def seg(ch):
+            return b"".join(struct.pack("<hhhh", *(int(v) if c == ch else 0 for c in range(4))) for v in nz)
+        write(a.out, 4, silence(lead, 4) + seg(0) + seg(2) + seg(1))
 
 
 if __name__ == "__main__":

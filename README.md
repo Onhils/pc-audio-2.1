@@ -31,6 +31,21 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 - **Penta:** 5× 80 W (max 120 W) @ 4 Ω, citlivost 200 mV–1,5 V, vstupní impedance 47 kΩ, THD+N 0,08 %, SNR 96 dB, PRE LEVEL trimry vzadu, SUBWOOFER OUT řízený hlasitostí.
 - **Velodyne SPL II:** low-pass 40–120 Hz (12 dB/okt. počáteční, 48 dB/okt. konečný), bypass „Subwoofer Direct“ pro externě filtrovaný signál; pro malé reproduktory doporučuje dělení 100–120 Hz; všechny vstupy se sčítají; optimum výkonu typicky v rohu.
 
+## Režimy 2.1 / 3.1
+
+`./setup.sh 2.1` nebo `./setup.sh 3.1` (pamatuje si poslední volbu v `~/.config/pc-audio-mode`). Funkční 2.1 je navíc zamrazený jako git tag **`v2.1`**.
+
+| | 2.1 | 3.1 (centr Mythos Three) |
+|---|---|---|
+| profil karty | Analog Surround 2.1 | Analog Surround 5.1 (zadní kanály nepoužité; karta 3.1 neumí) |
+| centr | zamíchán do sloupů (mpv, −3 dB) | oranžový jack hrot → bílý cinch → Penta CENTRE → Mythos Three |
+| bass management | PipeWire upmix `lfe-cutoff = 200` (jen stereo), mpv míchá 5.1 do sterea | filtr „3.1 EQ“: LFE = LR4 100 Hz z (0,5·FL + 0,5·FR + 0,707·FC) + LFE stopa; centr LR4 horní propust 100 Hz; PipeWire upmix vypnutý |
+| mpv | `pan=stereo` + alimiter 0,7 | `pan=3.1` (FL/FR + surroundy, FC, LFE 0,7) + alimiter 0,7 |
+| konfigurace | [`modes/2.1`](modes/2.1) | [`modes/3.1`](modes/3.1) |
+
+- PipeWire `lfe-cutoff` filtr je přesně **LR4 na cutoff/2** (změřeno: 50/70/90/110/150 Hz = −0,5/−1,9/−4,4/−7,8/−15,6 dB pro 200), proto 3.1 filtr (LR4 @ 100 Hz) dává subu stejnou křivku a úroveň – kalibrace subu i fáze platí v obou režimech.
+- Ověřeno potichu (`scripts/selftest.sh`): stereo 1 kHz do centru nejde, centr 1 kHz jen do centru, centr 50 Hz jde hlavně do subu, LFE stopa do subu.
+
 ## Hlavní zjištění
 
 1. **PipeWire ve výchozím stavu neposílá do LFE nic ze stereo zdrojů.** `channelmix.lfe-cutoff = 0` = žádné LFE. Musí se nastavit nenulová hodnota.
@@ -53,16 +68,16 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 
 | Část | Hodnota |
 |---|---|
-| PipeWire | `channelmix.upmix = true`, `channelmix.lfe-cutoff = 200` (reálně ~100 Hz) – [`config/pipewire`](config/pipewire) |
-| mpv | 5.1/7.1 → stereo downmix (centr/surroundy −3 dB, LFE stopa +3 dB) + `alimiter` 0.7; basy do subu pak dělá PipeWire stejně jako u hudby – [`config/mpv/mpv.conf`](config/mpv/mpv.conf) |
+| PipeWire | `channelmix.upmix = true`, `channelmix.lfe-cutoff = 200` (reálně ~100 Hz) – [`modes/2.1/90-lfe-sub.conf`](modes/2.1/90-lfe-sub.conf) |
+| mpv | 5.1/7.1 → stereo downmix (centr/surroundy −3 dB, LFE stopa +3 dB) + `alimiter` 0.7; basy do subu pak dělá PipeWire stejně jako u hudby – [`modes/2.1/mpv.conf`](modes/2.1/mpv.conf) |
 | Velodyne | line vstupy (Y kabel z Penta SUB OUT), **Subwoofer Direct**, fáze **180°** (z postele hlasitější na 80/100 Hz), hlasitost srovnaná se sloupy na 90 Hz z postele (2026-11-27, po přepojení přes Pentu) |
 | Ceratec Penta | hlavní ovládání hlasitosti (sloupy i sub) |
 | Hlasitost PC | 100 % natrvalo |
 | EasyEffects | nepoužívá se (smazáno) |
-| Room EQ | virtuální výstup „2.1 EQ (místnost)“ (výchozí): 70 Hz −9 dB (Q5), 120 Hz −10 dB (Q4) na FL/FR/LFE – [`91-room-eq.conf.in`](templates/91-room-eq.conf.in) |
-| Uspávání výstupu | vypnuto pro analog 2.1 (WirePlumber) – [`51-analog-no-suspend.conf`](config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf) |
+| Room EQ | virtuální výstup „2.1 EQ (místnost)“ (výchozí): 70 Hz −9 dB (Q5), 120 Hz −10 dB (Q4) na FL/FR/LFE – [`modes/*/91-room-eq.conf.in`](modes) |
+| Uspávání výstupu | vypnuto pro analog 2.1 (WirePlumber) – [`51-analog-no-suspend.conf`](common/51-analog-no-suspend.conf) |
 
-Instalace: `./setup.sh` (najde kartu, nastaví vše, ověří) – viz [NAVOD.md](NAVOD.md). Ladění: `./kalibrace.sh`.
+Instalace: `./setup.sh [2.1|3.1]` (najde kartu, nastaví vše, potichu ověří) – viz [NAVOD.md](NAVOD.md). Ladění: `./kalibrace.sh`.
 
 ### Ověření mpv (Iron Man, hlučná scéna, 30 s)
 
@@ -79,7 +94,8 @@ Instalace: `./setup.sh` (najde kartu, nastaví vše, ověří) – viz [NAVOD.md
 3. **Fáze** – `scripts/tones.py phase p.wav --freq 90` přehrát při 0° a 180°, nechat hlasitější. Smysl má až po kroku 2; když sub sloupy přehlušuje, rozdíl není slyšet.
 
 Pomocné skripty:
-- `scripts/measure-lfe-response.sh` – potichu změří LFE odezvu nainstalovaného nastavení (nebo zadaných hodnot `lfe-cutoff`).
+- `scripts/selftest.sh` – potichu ověří nainstalovaný režim (kam jdou basy, výšky, centr).
+- `scripts/measure-lfe-response.sh 100 200` – potichu porovná hodnoty PipeWire `lfe-cutoff` (2.1).
 - `scripts/record-levels.sh 30` – změří úrovně a ořez toho, co právě hraje.
 
 ## Měření z postele (telefon OnePlus Nord 3, Sound Meter, bez vážení A)
