@@ -5,7 +5,7 @@
 #   scripts/record-levels.sh 30
 set -euo pipefail
 secs=${1:-20}
-sink=${SINK:-alsa_output.pci-0000_0a_00.4.analog-surround-21}
+sink=${SINK:-$(pactl list short sinks | awk '$2 ~ /analog-surround-21$/ {print $2; exit}')}
 out=$(mktemp --suffix=.wav)
 trap 'rm -f "$out"' EXIT
 timeout "$secs" pw-record --target "$sink" -P stream.capture.sink=true \

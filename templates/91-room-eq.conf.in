@@ -32,14 +32,16 @@ context.modules = [
             audio.channels = 3
             audio.position = [ FL FR LFE ]
             priority.session = 2000
+            session.suspend-timeout-seconds = 0   # neuspávat (jinak se uspí i ALSA výstup -> rušení)
         }
         playback.props = {
             node.name      = "room_eq_21.output"
             node.passive   = true
             audio.channels = 3
             audio.position = [ FL FR LFE ]
-            target.object  = "alsa_output.pci-0000_0a_00.4.analog-surround-21"
+            target.object  = "@SINK@"
             stream.dont-remix = true
+            session.suspend-timeout-seconds = 0
         }
     }
 }

@@ -1,5 +1,7 @@
 # PC audio 2.1 – Mythos Four + Velodyne SPL II
 
+> 🐕 **Nový počítač? Jdi na [NAVOD.md](NAVOD.md)** – jedno tlačítko (`./setup.sh`) a průvodce laděním (`./kalibrace.sh`).
+
 Nastavení a poznatky z ladění 2.1 sestavy na Fedora / PipeWire (2026-11-25).
 
 ## Sestava
@@ -57,10 +59,10 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 | Ceratec Penta | hlavní ovládání hlasitosti (sloupy i sub) |
 | Hlasitost PC | 100 % natrvalo |
 | EasyEffects | nepoužívá se (smazáno) |
-| Room EQ | virtuální výstup „2.1 EQ (místnost)“ (výchozí): 70 Hz −9 dB (Q5), 120 Hz −10 dB (Q4) na FL/FR/LFE – [`91-room-eq.conf`](config/pipewire/pipewire.conf.d/91-room-eq.conf) |
+| Room EQ | virtuální výstup „2.1 EQ (místnost)“ (výchozí): 70 Hz −9 dB (Q5), 120 Hz −10 dB (Q4) na FL/FR/LFE – [`91-room-eq.conf.in`](templates/91-room-eq.conf.in) |
 | Uspávání výstupu | vypnuto pro analog 2.1 (WirePlumber) – [`51-analog-no-suspend.conf`](config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf) |
 
-Instalace: `./install.sh`
+Instalace: `./setup.sh` (najde kartu, nastaví vše, ověří) – viz [NAVOD.md](NAVOD.md). Ladění: `./kalibrace.sh`.
 
 ### Ověření mpv (Iron Man, hlučná scéna, 30 s)
 
@@ -77,7 +79,7 @@ Instalace: `./install.sh`
 3. **Fáze** – `scripts/tones.py phase p.wav --freq 90` přehrát při 0° a 180°, nechat hlasitější. Smysl má až po kroku 2; když sub sloupy přehlušuje, rozdíl není slyšet.
 
 Pomocné skripty:
-- `scripts/measure-lfe-response.sh 100 200 250` – potichu změří LFE odezvu pro dané hodnoty `lfe-cutoff`.
+- `scripts/measure-lfe-response.sh` – potichu změří LFE odezvu nainstalovaného nastavení (nebo zadaných hodnot `lfe-cutoff`).
 - `scripts/record-levels.sh 30` – změří úrovně a ořez toho, co právě hraje.
 
 ## Měření z postele (telefon OnePlus Nord 3, Sound Meter, bez vážení A)
