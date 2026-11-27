@@ -57,6 +57,8 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 | Ceratec Penta | hlavní ovládání hlasitosti (sloupy i sub) |
 | Hlasitost PC | 100 % natrvalo |
 | EasyEffects | nepoužívá se (smazáno) |
+| Room EQ | virtuální výstup „2.1 EQ (místnost)“ (výchozí): 70 Hz −9 dB (Q5), 120 Hz −10 dB (Q4) na FL/FR/LFE – [`91-room-eq.conf`](config/pipewire/pipewire.conf.d/91-room-eq.conf) |
+| Uspávání výstupu | vypnuto pro analog 2.1 (WirePlumber) – [`51-analog-no-suspend.conf`](config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf) |
 
 Instalace: `./install.sh`
 
@@ -78,6 +80,27 @@ Pomocné skripty:
 - `scripts/measure-lfe-response.sh 100 200 250` – potichu změří LFE odezvu pro dané hodnoty `lfe-cutoff`.
 - `scripts/record-levels.sh 30` – změří úrovně a ořez toho, co právě hraje.
 
+## Měření z postele (telefon OnePlus Nord 3, Sound Meter, bez vážení A)
+
+Krokové tóny 8 s, stereo cestou jako hudba (sloupy + sub), Penta ~1 hodina.
+
+| Hz | 30 | 35 | 40 | 45 | 50 | 60 | 70 | 80 | 90 | 100 | 120 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| EQ −4@70, −6@120 | 64 | 69 | 70 | 67 | 62 | 65 | **73** | 68 | 67 | 66 | **72,5** |
+| EQ −9@70, −10@120 | 66 | 70 | 71 | 67,8 | 63 | 64 | 68 | 67 | 66,5 | 65 | 68,5 |
+
+- 70 a 120 Hz srovnané (±2 dB = přesnost telefonu).
+- 35–40 Hz +4–5 dB (zesílení místností) – ponecháno.
+- 50 Hz díra −3 dB – EQ nezvedá (minimum místnosti), řešitelné jen přesunem subu/postele.
+- Sub uprostřed stěny je ve čtvercové místnosti dobrá poloha (roh by módy zesílil) – nestěhováno.
+
+## Rušení ze sloupů v tichu
+
+- Příčina: tuned nastavuje `snd_hda_intel power_save = 10` → po 10 s ticha PipeWire zavře výstup a kodek se uspí; citlivá Penta pak zesiluje rušení z nezatíženého výstupu.
+- Ověřeno: 60 s digitálního ticha rušení odstranilo.
+- Řešení: WirePlumber výstup neuspává (`session.suspend-timeout-seconds = 0`), kodek zůstává zapnutý. Bez sudo.
+- Kabely zapojené vzadu do desky (ASUS ROG Strix B550-F Gaming, SupremeFX S1220A).
+
 ## Software vs. interní crossover na subu
 
 Zvolen **softwarový** (PipeWire) + Subwoofer Direct:
@@ -87,8 +110,8 @@ Zvolen **softwarový** (PipeWire) + Subwoofer Direct:
 
 ## Otevřené body
 
-- Basy na posteli jsou slabé i po přidání subu → pravděpodobně módové minimum (čtvercová místnost). Plán: pomalý sweep 30–120 Hz (`scripts/tones.py sweep`) z postele, pak zkusit posunout sub o 50–100 cm ze středu stěny / blíž k rohu a porovnat.
-- Případně ekvalizace jen LFE (filter-chain v PipeWire) na zkrocení dunivého módu.
+- Po EQ znovu srovnat sub se sloupy z postele a ověřit fázi.
+- Případně přesnější měření: USB měřicí mikrofon (UMIK-1) + REW.
 - LFE stopa u filmů je na +3 dB (kino norma +10 dB); výš jen s ohledem na limiter.
 
 ## Zdroje
