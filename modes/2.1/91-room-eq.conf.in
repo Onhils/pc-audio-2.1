@@ -4,7 +4,8 @@
 # 2026-11-27: kroky 30–120 Hz z postele, měřeno telefonem (Nord 3, Sound Meter):
 #   30:64 35:69 40:70 45:67 50:62 60:65 70:73 80:68 90:67 100:66 120:72.5 dB (s EQ -4@70, -6@120)
 #   -> 70 Hz -9 dB (Q5), 120 Hz -10 dB (Q4). 50 Hz je díra místnosti (EQ nezvedá).
-#   2026-11-27 večer: + 37 Hz -4 dB (Q3) – 35–40 Hz bylo o 4–5 dB nad průměrem, při vyšší hlasitosti dunělo.
+#   2026-11-27 večer: + 38 Hz -7 dB (Q2) a 56 Hz -5 dB (Q8) – měřeno mikrofonem (scripts/mereni-mikrofonem.py):
+#   28–42 Hz bylo o 5–9 dB a 53–58 Hz o 8 dB nad úrovní 60–100 Hz, při vyšší hlasitosti dunělo.
 context.modules = [
 {   name = libpipewire-module-filter-chain
     args = {
@@ -12,25 +13,31 @@ context.modules = [
         media.name       = "2.1 EQ (místnost)"
         filter.graph = {
             nodes = [
-                { type = builtin name = fl37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
+                { type = builtin name = fl38 label = bq_peaking control = { "Freq" = 38.0  "Q" = 2.0 "Gain" = -7.0 } }
+                { type = builtin name = fl56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = fl70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fl120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
-                { type = builtin name = fr37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
+                { type = builtin name = fr38 label = bq_peaking control = { "Freq" = 38.0  "Q" = 2.0 "Gain" = -7.0 } }
+                { type = builtin name = fr56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = fr70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fr120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
-                { type = builtin name = lfe37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
+                { type = builtin name = lfe38 label = bq_peaking control = { "Freq" = 38.0  "Q" = 2.0 "Gain" = -7.0 } }
+                { type = builtin name = lfe56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = lfe70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = lfe120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
             ]
             links = [
-                { output = "lfe37:Out" input = "lfe70:In" }
-                { output = "fr37:Out" input = "fr70:In" }
-                { output = "fl37:Out" input = "fl70:In" }
+                { output = "lfe38:Out" input = "lfe56:In" }
+                { output = "lfe56:Out" input = "lfe70:In" }
+                { output = "fr38:Out" input = "fr56:In" }
+                { output = "fr56:Out" input = "fr70:In" }
+                { output = "fl38:Out" input = "fl56:In" }
+                { output = "fl56:Out" input = "fl70:In" }
                 { output = "fl70:Out"  input = "fl120:In" }
                 { output = "fr70:Out"  input = "fr120:In" }
                 { output = "lfe70:Out" input = "lfe120:In" }
             ]
-            inputs  = [ "fl37:In"   "fr37:In"   "lfe37:In" ]
+            inputs  = [ "fl38:In"   "fr38:In"   "lfe38:In" ]
             outputs = [ "fl120:Out" "fr120:Out" "lfe120:Out" ]
         }
         capture.props = {

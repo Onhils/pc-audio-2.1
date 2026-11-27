@@ -1,0 +1,26 @@
+<!doctype html><html lang="cs"><head><meta charset="utf-8"><title>Basy z postele</title>
+<style>
+:root{--t1:var(--foreground);--t2:var(--muted-foreground);--grid:var(--border);--s1:var(--chart-1);--s2:var(--chart-2);--s3:var(--chart-3);--band:color-mix(in srgb,var(--chart-1) 10%,transparent);--surface:var(--popover)}
+body{margin:0;font-size:14px;line-height:1.4}
+h1{font-size:17px;margin:0 0 2px}.sub{color:var(--t2);margin:0 0 10px;font-size:13px}
+.lg{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:6px}.lg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+svg{width:100%;height:400px;display:block}#tt{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--grid);border-radius:6px;padding:6px 8px;font-size:12px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+</style></head><body>
+<h1>Basy v místě poslechu (postel)</h1><p class="sub">Mikrofon CM25 + Focusrite Solo, krokový sinus po 1/24 oktávy. 0 dB = průměr 60–100 Hz. Ideál je co nejrovnější čára.</p>
+<div class="lg"><span><i style="background:var(--s1);height:4px"></i>teď (38 Hz −7, 56 Hz −5, 70 Hz −9, 120 Hz −10)</span><span><i style="background:var(--s2)"></i>dřív (37 Hz −4)</span><span><i style="background:var(--s3)"></i>bez ekvalizéru</span></div>
+<svg id="c" viewBox="0 0 760 400" preserveAspectRatio="none"></svg><div id="tt"></div>
+<script>
+const D=[[22.4, -8.9, -9.4, -10.4], [23.8, -4.5, -5.1, -6.0], [24.5, -2.9, -3.5, -4.5], [25.2, -1.6, -2.3, -3.7], [25.9, -0.7, -1.5, -3.2], [26.7, 0.8, -0.2, -2.2], [27.5, 2.8, 1.6, -0.3], [28.3, 3.9, 2.7, 0.7], [29.1, 5.2, 3.8, 1.6], [30.0, 5.6, 3.9, 1.6], [30.8, 4.8, 2.8, 0.1], [31.7, 5.8, 3.5, 0.5], [32.7, 6.5, 3.8, 1.0], [33.6, 7.5, 4.2, 1.6], [34.6, 7.2, 3.6, 0.8], [35.6, 8.0, 3.8, 0.8], [36.7, 8.4, 4.1, 1.1], [37.8, 8.3, 4.0, 0.7], [38.9, 9.1, 5.2, 1.5], [40.0, 9.4, 5.7, 2.0], [41.2, 8.6, 5.3, 2.0], [42.4, 6.5, 3.6, -0.1], [43.6, 5.2, 2.5, -1.1], [44.9, 2.5, 0.2, -3.5], [46.2, 0.6, -1.5, -5.1], [47.6, 1.9, -0.2, -3.2], [49.0, 2.8, 0.8, -2.5], [50.4, 1.9, -0.1, -3.4], [51.9, 1.7, -0.2, -4.6], [53.4, 6.4, 4.3, -1.0], [55.0, 8.8, 6.5, 0.4], [56.6, 8.6, 6.0, -0.0], [58.2, 8.3, 5.4, 0.6], [59.9, 5.4, 1.9, 0.1], [61.7, 5.5, 1.2, -1.3], [63.5, 6.4, 1.1, -1.0], [65.4, 8.2, 1.5, -0.1], [67.3, 10.0, 1.6, 0.4], [69.2, 10.9, 1.3, 0.3], [71.3, 12.5, 3.0, 1.9], [73.4, 11.6, 3.5, 2.0], [75.5, 8.6, 2.0, 0.6], [77.7, 4.5, -0.8, -2.4], [80.0, 2.0, -2.3, -2.8], [82.3, 2.0, -1.8, -1.3], [84.8, 7.4, 3.9, 3.5], [87.2, 5.2, 1.9, 1.3], [89.8, 0.6, -2.6, -3.3], [92.4, -2.9, -6.2, -7.0], [95.1, -1.1, -4.5, -5.3], [97.9, 1.0, -2.8, -3.3], [100.8, 2.8, -1.5, -2.1], [103.7, 6.1, 1.2, 0.6], [106.8, 11.0, 5.1, 4.8], [109.9, 14.6, 7.5, 7.6], [113.1, 15.4, 6.9, 6.4], [116.5, 14.1, 4.3, 3.8], [119.9, 15.4, 5.0, 4.5], [123.4, 14.6, 4.8, 4.8], [127.0, 13.3, 4.9, 4.9], [130.7, 14.4, 7.5, 5.9], [134.5, 7.2, 1.6, 1.9], [138.5, 8.2, 3.7, 3.8]],W=760,H=400,L=44,R=12,T=10,B=34,fx=Math.log;
+const x=f=>L+(fx(f)-fx(22))/(fx(140)-fx(22))*(W-L-R),y=v=>T+(16-v)/(16+16)*(H-T-B);
+const c=document.getElementById('c');let s='';
+s+=`<rect x="${x(28)}" y="${T}" width="${x(45)-x(28)}" height="${H-T-B}" fill="var(--band)"/><text x="${(x(28)+x(45))/2}" y="${T+14}" text-anchor="middle" font-size="11" fill="var(--t2)">dunění</text>`;
+for(let v=-16;v<=16;v+=4)s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" ${v==0?'stroke-width="1.5"':''}/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--t2)">${v>0?'+':''}${v}</text>`;
+for(const f of [25,30,40,50,60,70,80,100,120])s+=`<line x1="${x(f)}" x2="${x(f)}" y1="${T}" y2="${H-B}" stroke="var(--grid)"/><text x="${x(f)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="var(--t2)">${f}</text>`;
+s+=`<text x="${(W+L)/2}" y="${H-2}" text-anchor="middle" font-size="11" fill="var(--t2)">Hz</text><text x="12" y="${T+8}" font-size="11" fill="var(--t2)">dB</text>`;
+const path=i=>'M'+D.map(p=>x(p[0]).toFixed(1)+','+y(Math.max(-16,Math.min(16,p[i]))).toFixed(1)).join('L');
+s+=`<path d="${path(1)}" fill="none" stroke="var(--s3)" stroke-width="2"/><path d="${path(2)}" fill="none" stroke="var(--s2)" stroke-width="2"/><path d="${path(3)}" fill="none" stroke="var(--s1)" stroke-width="3"/>`;
+s+=`<line id="xh" y1="${T}" y2="${H-B}" stroke="var(--t2)" stroke-dasharray="3 3" visibility="hidden"/><rect id="hit" x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent"/>`;
+c.innerHTML=s;const tt=document.getElementById('tt'),xh=document.getElementById('xh');
+document.getElementById('hit').addEventListener('pointermove',e=>{const r=c.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;let b=D[0];for(const p of D)if(Math.abs(x(p[0])-px)<Math.abs(x(b[0])-px))b=p;xh.setAttribute('x1',x(b[0]));xh.setAttribute('x2',x(b[0]));xh.setAttribute('visibility','visible');tt.style.display='block';tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY+12)+'px';const f=v=>(v>0?'+':'')+v.toFixed(1)+' dB';tt.innerHTML=`<b>${b[0]} Hz</b><br>teď ${f(b[3])}<br>dřív ${f(b[2])}<br>bez EQ ${f(b[1])}`});
+document.getElementById('hit').addEventListener('pointerleave',()=>{tt.style.display='none';xh.setAttribute('visibility','hidden')});
+</script></body></html>

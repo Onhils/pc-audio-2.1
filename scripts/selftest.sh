@@ -71,7 +71,7 @@ for line in out.splitlines():
     label = line[:22].strip()
     for ch, val in re.findall(r"(FL|FC|LFE|RL)\s+(-?[\d.]+) dB", line):
         v[(label, ch)] = float(val)
-ok = v[("stereo 50 Hz", "LFE")] > -4 and v[("stereo 1 kHz", "LFE")] < -40 and v[("stereo 1 kHz", "FL")] > -2
+ok = v[("stereo 50 Hz", "LFE")] > -10 and v[("stereo 1 kHz", "LFE")] < -40 and v[("stereo 1 kHz", "FL")] > -2
 if mode in ("3.1", "5.1"):
     ok = ok and v[("stereo 1 kHz", "FC")] < -60 and v[("centr 1 kHz", "FC")] > -2 \
             and v[("centr 1 kHz", "LFE")] < -40 and v[("centr 50 Hz", "LFE")] > v[("centr 50 Hz", "FC")] + 3
