@@ -94,6 +94,22 @@ Krokové tóny 8 s, stereo cestou jako hudba (sloupy + sub), Penta ~1 hodina.
 - 50 Hz díra −3 dB – EQ nezvedá (minimum místnosti), řešitelné jen přesunem subu/postele.
 - Sub uprostřed stěny je ve čtvercové místnosti dobrá poloha (roh by módy zesílil) – nestěhováno.
 
+### Finální srovnání po EQ (Penta 12 h, telefon)
+
+| | sub | sloupy |
+|---|---|---|
+| místo 1 na posteli | 62,5 dB | 62,5 dB |
+| místo 2 na posteli | 64 dB | 61 dB |
+
+Fáze (telefon uprostřed postele):
+
+| | 80 Hz | 100 Hz |
+|---|---|---|
+| 0° | 60 dB | 60 dB |
+| **180°** | **68 dB** | **63 dB** |
+
+→ fáze **180°** (+8 dB na 80 Hz, +3 dB na 100 Hz = sub a sloupy se na dělení sčítají).
+
 ## Rušení ze sloupů v tichu
 
 - Příčina: tuned nastavuje `snd_hda_intel power_save = 10` → po 10 s ticha PipeWire zavře výstup a kodek se uspí; citlivá Penta pak zesiluje rušení z nezatíženého výstupu.
@@ -110,7 +126,6 @@ Zvolen **softwarový** (PipeWire) + Subwoofer Direct:
 
 ## Otevřené body
 
-- Po EQ znovu srovnat sub se sloupy z postele a ověřit fázi.
 - Případně přesnější měření: USB měřicí mikrofon (UMIK-1) + REW.
 - LFE stopa u filmů je na +3 dB (kino norma +10 dB); výš jen s ohledem na limiter.
 
