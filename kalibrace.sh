@@ -15,6 +15,7 @@ pactl list short sinks | awk '{print $2}' | grep -qx room_eq_21 && [[ -n "$alsa"
 play_direct3() { pw-play --target "$alsa" --channel-map FL,FR,LFE "$1"; }
 play_eq2()     { paplay --device=room_eq_21 "$1"; }
 play_eq4()     { pw-play --target room_eq_21 --channel-map FL,FR,FC,LFE "$1"; }
+play_eq6()     { pw-play --target room_eq_21 --channel-map FL,FR,FC,LFE,RL,RR "$1"; }
 
 while true; do
   cat <<EOF
@@ -25,7 +26,8 @@ ${B}=== Kalibrace $mode ===${N}   (Penta na běžné hlasitosti filmu, PC 100 %)
   3) Fáze 0°/180°          – A, pauza na přepnutí, B (nech, co je hlasitější)
   4) Měření basů telefonem – tóny 30–120 Hz po 8 s (zapiš dB, pošli Claudovi)
 EOF
-  [[ $mode == 3.1 ]] && echo "  5) Hlasitost CENTRU      – šum: levý sloup, CENTR, pravý sloup (PRE LEVEL CENTRE na Pentě)"
+  [[ $mode != 2.1 ]] && echo "  5) Hlasitost CENTRU      – šum: levý sloup, CENTR, pravý sloup (PRE LEVEL CENTRE na Pentě)"
+  [[ $mode == 5.1 ]] && echo "  6) Hlasitost ZADNÍCH     – šum: levý sloup, ZADNÍ L, ZADNÍ P, pravý sloup (PRE LEVEL REAR na Pentě)"
   echo "  q) Konec"
   read -rp "Vyber: " c
   case "$c" in
@@ -48,12 +50,20 @@ EOF
        echo "    Hz 30 35 40 45 50 60 70 80 90 100 120   (každý 8 s, mezi nimi 2 s ticho)"
        play_eq2 "$tmp/a.wav"
        echo "  Pošli Claudovi 11 čísel – upraví ekvalizér v modes/$mode/91-room-eq.conf.in" ;;
-    5) [[ $mode == 3.1 ]] || continue
+    5) [[ $mode != 2.1 ]] || continue
        python3 "$T" center "$tmp/a.wav"
        while true; do
          echo "  Za 3 s: ${B}10 s LEVÝ sloup${N}, ${B}10 s CENTR${N}, ${B}10 s PRAVÝ sloup${N}. Telefon na posteli doprostřed."
          echo "  Točíš ${B}PRE LEVEL CENTRE${N} vzadu na Pentě, dokud centr neukazuje stejně dB jako sloupy."
          play_eq4 "$tmp/a.wav"
+         read -rp "  Znovu? [Enter = znovu, h = hotovo] " r; [[ "$r" == h* ]] && break
+       done ;;
+    6) [[ $mode == 5.1 ]] || continue
+       python3 "$T" rear "$tmp/a.wav"
+       while true; do
+         echo "  Za 3 s: ${B}10 s LEVÝ sloup${N}, ${B}10 s ZADNÍ L${N}, ${B}10 s ZADNÍ P${N}, ${B}10 s PRAVÝ sloup${N}. Telefon na místo hlavy."
+         echo "  Točíš ${B}PRE LEVEL REAR${N} vzadu na Pentě (pozor: zadní jsou blízko – stačí je mít stejně, ne hlasitěji)."
+         play_eq6 "$tmp/a.wav"
          read -rp "  Znovu? [Enter = znovu, h = hotovo] " r; [[ "$r" == h* ]] && break
        done ;;
     q|Q) exit 0 ;;

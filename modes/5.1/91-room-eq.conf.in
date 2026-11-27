@@ -1,0 +1,110 @@
+# 5.1: sloupy Mythos Four (FL/FR), centr Mythos Three (FC), Velodyne (LFE), zadní 2× Mythos Five (RL/RR).
+# Virtuální výstup "5.1 EQ (místnost)" -> ALSA 5.1 výstup (černý jack -> Penta INPUT REAR).
+#
+# Bass management (PipeWire upmix vypnutý):
+#   LFE = LR4 100 Hz z (0.5*FL + 0.5*FR + 0.5*RL + 0.5*RR) + LR4 80 Hz z 0.707*FC + LFE stopa
+#   centr: LR4 horní propust 80 Hz; zadní: LR4 horní propust 100 Hz; sloupy plné pásmo
+# Zadní: zpoždění @REAR_DELAY_MS@ ms (jsou blíž k hlavě než přední – zvuk z nich nesmí přijít první).
+#   Výpočet: (vzdálenost hlava→sloup − hlava→zadní) v metrech / 0.343 = ms.
+# Zadní zap/vyp za běhu (mpv-ovladac zadni-zap / zadni-vyp, z telefonu):
+#   vyp = zadní ztichnou a jejich zvuk se přimíchá do sloupů (-3 dB), jako ve 3.1.
+# Ekvalizace místnosti (z postele 2026-11-27) jen na sloupy/centr/sub: 70 Hz -9 dB Q5, 120 Hz -10 dB Q4.
+context.modules = [
+{   name = libpipewire-module-filter-chain
+    args = {
+        node.description = "5.1 EQ (místnost)"
+        media.name       = "5.1 EQ (místnost)"
+        filter.graph = {
+            nodes = [
+                { type = builtin name = in_fl label = copy }
+                { type = builtin name = in_fr label = copy }
+                { type = builtin name = in_fc label = copy }
+                { type = builtin name = in_rl label = copy }
+                { type = builtin name = in_rr label = copy }
+                # zadní -> přední, když jsou zadní vypnuté (Gain 2 = 0 zap / 0.707 vyp)
+                { type = builtin name = fl_mix label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 0.0 } }
+                { type = builtin name = fr_mix label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 0.0 } }
+                # basy do subu
+                { type = builtin name = bass_sum label = mixer control = { "Gain 1" = 0.5 "Gain 2" = 0.5 "Gain 3" = 0.5 "Gain 4" = 0.5 } }
+                { type = builtin name = bass_lp1 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = bass_lp2 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_lp1 label = bq_lowpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_lp2 label = bq_lowpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = lfe_sum  label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 1.0 "Gain 3" = 0.707 } }
+                # centr bez basů
+                { type = builtin name = fc_hp1 label = bq_highpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_hp2 label = bq_highpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                # zadní: zpoždění, bez basů, zap/vyp (Gain 1 = 1 zap / 0 vyp)
+                { type = builtin name = rl_delay label = delay config = { "max-delay" = 0.05 } control = { "Delay (s)" = @REAR_DELAY_S@ } }
+                { type = builtin name = rr_delay label = delay config = { "max-delay" = 0.05 } control = { "Delay (s)" = @REAR_DELAY_S@ } }
+                { type = builtin name = rl_hp1 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = rl_hp2 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = rr_hp1 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = rr_hp2 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = rl_gain label = mixer control = { "Gain 1" = 1.0 } }
+                { type = builtin name = rr_gain label = mixer control = { "Gain 1" = 1.0 } }
+                # ekvalizace místnosti
+                { type = builtin name = fl70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = fl120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fr70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = fr120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fc120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = lfe70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
+                { type = builtin name = lfe120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+            ]
+            links = [
+                { output = "in_fl:Out" input = "fl_mix:In 1" }
+                { output = "in_fl:Out" input = "bass_sum:In 1" }
+                { output = "in_fr:Out" input = "fr_mix:In 1" }
+                { output = "in_fr:Out" input = "bass_sum:In 2" }
+                { output = "in_rl:Out" input = "fl_mix:In 2" }
+                { output = "in_rl:Out" input = "bass_sum:In 3" }
+                { output = "in_rl:Out" input = "rl_delay:In" }
+                { output = "in_rr:Out" input = "fr_mix:In 2" }
+                { output = "in_rr:Out" input = "bass_sum:In 4" }
+                { output = "in_rr:Out" input = "rr_delay:In" }
+                { output = "in_fc:Out" input = "fc_hp1:In" }
+                { output = "in_fc:Out" input = "fc_lp1:In" }
+                { output = "fc_lp1:Out" input = "fc_lp2:In" }
+                { output = "fc_lp2:Out" input = "lfe_sum:In 3" }
+                { output = "fl_mix:Out" input = "fl70:In" }
+                { output = "fr_mix:Out" input = "fr70:In" }
+                { output = "fl70:Out"  input = "fl120:In" }
+                { output = "fr70:Out"  input = "fr120:In" }
+                { output = "fc_hp1:Out" input = "fc_hp2:In" }
+                { output = "fc_hp2:Out" input = "fc120:In" }
+                { output = "rl_delay:Out" input = "rl_hp1:In" }
+                { output = "rl_hp1:Out" input = "rl_hp2:In" }
+                { output = "rl_hp2:Out" input = "rl_gain:In 1" }
+                { output = "rr_delay:Out" input = "rr_hp1:In" }
+                { output = "rr_hp1:Out" input = "rr_hp2:In" }
+                { output = "rr_hp2:Out" input = "rr_gain:In 1" }
+                { output = "bass_sum:Out" input = "bass_lp1:In" }
+                { output = "bass_lp1:Out" input = "bass_lp2:In" }
+                { output = "bass_lp2:Out" input = "lfe_sum:In 1" }
+                { output = "lfe_sum:Out"  input = "lfe70:In" }
+                { output = "lfe70:Out"    input = "lfe120:In" }
+            ]
+            inputs  = [ "in_fl:In" "in_fr:In" "in_fc:In" "lfe_sum:In 2" "in_rl:In" "in_rr:In" ]
+            outputs = [ "fl120:Out" "fr120:Out" "fc120:Out" "lfe120:Out" "rl_gain:Out" "rr_gain:Out" ]
+        }
+        capture.props = {
+            node.name      = "room_eq_21"
+            media.class    = Audio/Sink
+            audio.channels = 6
+            audio.position = [ FL FR FC LFE RL RR ]
+            priority.session = 2000
+            session.suspend-timeout-seconds = 0
+        }
+        playback.props = {
+            node.name      = "room_eq_21.output"
+            node.passive   = true
+            audio.channels = 6
+            audio.position = [ FL FR FC LFE RL RR ]
+            target.object  = "@SINK@"
+            stream.dont-remix = true
+            session.suspend-timeout-seconds = 0
+        }
+    }
+}
+]

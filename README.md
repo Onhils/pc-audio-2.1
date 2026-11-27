@@ -1,6 +1,10 @@
 # PC audio 2.1 – Mythos Four + Velodyne SPL II
 
 > 🐕 **Nový počítač? Jdi na [NAVOD.md](NAVOD.md)** – jedno tlačítko (`./setup.sh`) a průvodce laděním (`./kalibrace.sh`).
+>
+> 💬 Vzniklo v konverzaci s Claude Code (T3 Code), **session `94846fb0-055b-4bed-afb2-8d2e216158ce`** (2026-11-25 – 2026-11-27).
+> Navázat: v T3 Code otevři vlákno „vidíš moje audio nastavení…“, nebo v terminálu
+> `cd ~/.t3/scratch/2026-11-25-vidis-moje-audio-nastaveni-mam-ca81a3db && claude --resume 94846fb0-055b-4bed-afb2-8d2e216158ce`.
 
 Nastavení a poznatky z ladění 2.1 sestavy na Fedora / PipeWire (2026-11-25).
 
@@ -33,7 +37,7 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 
 ## Režimy 2.1 / 3.1
 
-`./setup.sh 2.1` nebo `./setup.sh 3.1` (pamatuje si poslední volbu v `~/.config/pc-audio-mode`). Funkční 2.1 je navíc zamrazený jako git tag **`v2.1`**.
+`./setup.sh 2.1`, `./setup.sh 3.1` nebo `./setup.sh 5.1` (pamatuje si poslední volbu v `~/.config/pc-audio-mode`). Funkční 2.1 je navíc zamrazený jako git tag **`v2.1`**.
 
 | | 2.1 | 3.1 (centr Mythos Three) |
 |---|---|---|
@@ -42,6 +46,8 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 | bass management | PipeWire upmix `lfe-cutoff = 200` (jen stereo), mpv míchá 5.1 do sterea | filtr „3.1 EQ“: LFE = LR4 100 Hz z (0,5·FL + 0,5·FR) + LR4 80 Hz z 0,707·FC + LFE stopa; centr LR4 horní propust **80 Hz** (se 100 Hz zněly dialogy dutě); PipeWire upmix vypnutý |
 | mpv | `pan=stereo` + alimiter 0,7 | `pan=3.1` (FL/FR + surroundy, FC, LFE 0,7) + alimiter 0,7; klávesy **F1/F2/F3** = dialogy centr / sloupy / mix (A/B) |
 | konfigurace | [`modes/2.1`](modes/2.1) | [`modes/3.1`](modes/3.1) |
+
+**5.1** ([`modes/5.1`](modes/5.1), připraveno, naživo zatím nevyzkoušeno): navíc 2× Mythos Five (černý jack → Penta INPUT REAR → SPEAKER OUT REAR). Zadní: LR4 horní propust 100 Hz (basy do subu), zpoždění `REAR_DELAY_MS` (uloženo v `~/.config/pc-audio-rear-delay-ms`), zap/vyp za běhu přes `mpv-ovladac zadni-zap|zadni-vyp` (pw-cli parametry filtru; vyp = přimíchat do sloupů −3 dB). mpv předává 5.1 beze změny (`pan=5.1`, LFE 0,7, alimiter 0,7). Ověřeno potichu: zadní 1 kHz jen do RL, zadní 50 Hz do subu, zpoždění přesně 8,00 ms, přepínač funguje.
 
 - PipeWire `lfe-cutoff` filtr je přesně **LR4 na cutoff/2** (změřeno: 50/70/90/110/150 Hz = −0,5/−1,9/−4,4/−7,8/−15,6 dB pro 200), proto 3.1 filtr (LR4 @ 100 Hz) dává subu stejnou křivku a úroveň – kalibrace subu i fáze platí v obou režimech.
 - Ověřeno potichu (`scripts/selftest.sh`): stereo 1 kHz do centru nejde, centr 1 kHz jen do centru, centr 50 Hz jde hlavně do subu, LFE stopa do subu.

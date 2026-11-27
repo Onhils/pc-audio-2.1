@@ -8,6 +8,8 @@ Režimy:
   phase  out.wav [--tone 7] [--pause 5] [--lead 10]  A: 80+100 Hz, pauza (přepnout fázi), B: 80+100 Hz (stereo)
   steps  out.wav [--tone 8] [--lead 10]              tóny 30–120 Hz pro měření (stereo)
   center out.wav [--seg 10] [--lead 3]               šum 500–2000 Hz: levý sloup, CENTR, pravý sloup (4 kanály FL,FR,FC,LFE)
+  rear   out.wav [--seg 10] [--lead 3]               šum 500–2000 Hz: levý sloup, ZADNÍ L, ZADNÍ P, pravý sloup
+                                                     (6 kanálů FL,FR,FC,LFE,RL,RR)
 
 Přehrání:
   3kanálové:  pw-play --target room_eq_21 --channel-map FL,FR,LFE out.wav
@@ -72,7 +74,7 @@ def write(path, channels, frames):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("mode", choices=["lfe", "align", "phase", "steps", "center"])
+    p.add_argument("mode", choices=["lfe", "align", "phase", "steps", "center", "rear"])
     p.add_argument("out")
     p.add_argument("--freq", type=float, default=50)
     p.add_argument("--seconds", type=float, default=10)
@@ -106,6 +108,12 @@ def main():
         def seg(ch):
             return b"".join(struct.pack("<hhhh", *(int(v) if c == ch else 0 for c in range(4))) for v in nz)
         write(a.out, 4, silence(lead, 4) + seg(0) + seg(2) + seg(1))
+    elif a.mode == "rear":
+        lead = 3 if a.lead is None else a.lead
+        nz = band_noise(a.seg)
+        def seg6(ch):
+            return b"".join(struct.pack("<6h", *(int(v) if c == ch else 0 for c in range(6))) for v in nz)
+        write(a.out, 6, silence(lead, 6) + seg6(0) + seg6(4) + seg6(5) + seg6(1))
 
 
 if __name__ == "__main__":

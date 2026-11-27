@@ -2,11 +2,14 @@
 # Jedno tlačítko: nainstaluje a nastaví zvuk na Fedoře.
 #   2.1 = sloupy Mythos Four + Velodyne (přes Pentu)
 #   3.1 = navíc centr Mythos Three (Penta CENTER SPEAKER OUT)
+#   5.1 = navíc zadní 2× Mythos Five (Penta SPEAKER OUT REAR)
 # Spouštět jako normální uživatel (ne sudo). Dá se spustit opakovaně – nic nerozbije.
 #
 #   ./setup.sh            # stejný režim jako minule (poprvé 2.1)
 #   ./setup.sh 3.1        # přepnout na 3.1 (s centrem)
 #   ./setup.sh 2.1        # přepnout zpět na 2.1
+#   ./setup.sh 5.1        # navíc zadní 2× Mythos Five (černý jack -> Penta INPUT REAR)
+#   REAR_DELAY_MS=8 ./setup.sh 5.1   # zpoždění zadních (zapamatuje se; viz NAVOD.md)
 #   CARD=alsa_card.xxx ./setup.sh   # vynutit konkrétní zvukovou kartu
 set -euo pipefail
 
@@ -16,7 +19,8 @@ mode=${1:-$(cat "$modefile" 2>/dev/null || echo 2.1)}
 case "$mode" in
   2.1) surround=21 ;;
   3.1) surround=51 ;;   # zvuková karta 3.1 neumí -> 5.1 profil, zadní kanály zůstanou nevyužité
-  *) echo "Neznámý režim '$mode'. Použij: ./setup.sh 2.1  nebo  ./setup.sh 3.1"; exit 1 ;;
+  5.1) surround=51 ;;
+  *) echo "Neznámý režim '$mode'. Použij: ./setup.sh 2.1 | 3.1 | 5.1"; exit 1 ;;
 esac
 M="$here/modes/$mode"
 G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; B=$'\e[1m'; N=$'\e[0m'
@@ -92,13 +96,21 @@ elif grep -qs "^# pc-audio" "$HOME/.config/mpv/input.conf"; then
   rm -f "$HOME/.config/mpv/input.conf"
 fi
 mkdir -p "$HOME/.config/pipewire/pipewire.conf.d"
-sed "s|@SINK@|$sink|" "$M/91-room-eq.conf.in" > "$HOME/.config/pipewire/pipewire.conf.d/91-room-eq.conf"
+delayfile="$HOME/.config/pc-audio-rear-delay-ms"
+rear_ms=${REAR_DELAY_MS:-$(cat "$delayfile" 2>/dev/null || echo 0)}
+[[ $rear_ms =~ ^[0-9]+([.][0-9]+)?$ ]] && python3 -c "import sys; sys.exit(0 if float('$rear_ms') <= 50 else 1)" \
+  || die "REAR_DELAY_MS musí být číslo 0–50 (milisekundy), dostal jsem '$rear_ms'."
+rear_s=$(python3 -c "print(round(float('$rear_ms')/1000, 5))")
+sed -e "s|@SINK@|$sink|" -e "s|@REAR_DELAY_S@|$rear_s|g" -e "s|@REAR_DELAY_MS@|$rear_ms|g" \
+    "$M/91-room-eq.conf.in" > "$HOME/.config/pipewire/pipewire.conf.d/91-room-eq.conf"
+if [[ $mode == 5.1 ]]; then echo "$rear_ms" > "$delayfile"; fi
 echo "$mode" > "$modefile"
 ok "Basy do subu (dělení ~100 Hz)"
 ok "Ekvalizér místnosti (70 Hz, 120 Hz)"
 ok "Výstup se neuspává (žádné rušení v tichu)"
 ok "mpv: filmy 5.1/7.1 se správně smíchají do $mode"
-if [[ $mode == 3.1 ]]; then ok "Centr: basy pod 80 Hz jdou do subu, dialogy z Mythos Three"; ok "mpv klávesy: F1 = dialogy z centru, F2 = ze sloupů, F3 = mix"; fi
+if [[ $mode != 2.1 ]]; then ok "Centr: basy pod 80 Hz jdou do subu, dialogy z Mythos Three"; ok "mpv klávesy: F1 = dialogy z centru, F2 = ze sloupů, F3 = mix"; fi
+if [[ $mode == 5.1 ]]; then ok "Zadní: basy pod 100 Hz do subu, zpoždění $rear_ms ms, zap/vyp z telefonu"; fi
 
 # ovládání mpv z telefonu (GSConnect / KDE Connect)
 install -Dm755 "$here/common/mpv-ovladac" "$HOME/.local/bin/mpv-ovladac"
@@ -107,7 +119,7 @@ if command -v dconf >/dev/null && [[ -n "$(dconf read /org/gnome/shell/extension
   bin="$HOME/.local/bin/mpv-ovladac"
   list="{"
   i=0
-  for pair in "centr:Dialogy: CENTR" "sloupy:Dialogy: SLOUPY" "mix:Dialogy: MIX" "zpet:Zpět 5 s" "pauza:Pauza / přehrát" "smycka:Smyčka (začátek / konec / zrušit)"; do
+  for pair in "centr:Dialogy: CENTR" "sloupy:Dialogy: SLOUPY" "mix:Dialogy: MIX" "zadni-zap:Zadní: ZAP" "zadni-vyp:Zadní: VYP (do sloupů)" "zpet:Zpět 5 s" "pauza:Pauza / přehrát" "smycka:Smyčka (začátek / konec / zrušit)"; do
     i=$((i+1)); cmd=${pair%%:*}; name=${pair#*:}
     list+="'pc-audio-$i': <{'name': <'$name'>, 'command': <'$bin $cmd'>}>, "
   done
@@ -149,7 +161,7 @@ ok "Výstup probuzený (i po každém přihlášení)"
 step "5/6 Kontroluju potichu, že basy jdou do subu (do reproduktorů nic nejde)"
 if out=$("$here/scripts/selftest.sh" "$mode" 2>&1); then
   echo "$out" | sed 's/^/    /'
-  ok "Sub dostává basy, výšky ne$([[ $mode == 3.1 ]] && echo "; centr hraje jen dialogy/výšky, jeho basy jdou do subu")"
+  ok "Sub dostává basy, výšky ne$([[ $mode != 2.1 ]] && echo "; centr$([[ $mode == 5.1 ]] && echo " i zadní") bez basů, ty jdou do subu")"
 else
   echo "$out" | sed 's/^/    /'
   die "Autotest nesedí – kanály nejdou tam, kam mají."
@@ -164,7 +176,7 @@ cat <<EOF
    2. Spusť znovu prohlížeč / mpv, pokud běžely.
    3. Pusť si něco s basami – sub musí hrát.
    4. Když něco nesedí (nový pokoj, přesunutý sub, nový centr): ${B}./kalibrace.sh${N}
-   5. Přepnutí režimu: ${B}./setup.sh 2.1${N}  /  ${B}./setup.sh 3.1${N}
+   5. Přepnutí režimu: ${B}./setup.sh 2.1${N}  /  ${B}./setup.sh 3.1${N}  /  ${B}./setup.sh 5.1${N}
 
   Podrobný návod: NAVOD.md
 EOF

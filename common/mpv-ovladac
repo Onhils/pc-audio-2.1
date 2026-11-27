@@ -2,6 +2,7 @@
 """Ovládání běžícího mpv z telefonu (GSConnect / KDE Connect „Spustit příkaz“) nebo z terminálu.
 
   mpv-ovladac centr|sloupy|mix     dialogy z centru / ze sloupů / mix (jen 3.1, filmy 5.1)
+  mpv-ovladac zadni-zap|zadni-vyp  zadní reproduktory zap / vyp (vyp = přimíchat do sloupů; jen 5.1)
   mpv-ovladac zpet                 o 5 s zpět
   mpv-ovladac pauza                pauza / přehrát
   mpv-ovladac test                 jen ukáže v obraze nápis (ověření spojení)
@@ -13,6 +14,7 @@ Komunikuje přes IPC socket mpv (input-ipc-server=~~/socket v mpv.conf).
 import json
 import os
 import socket
+import subprocess
 import sys
 
 SOCK = os.path.expanduser("~/.config/mpv/socket")
@@ -25,6 +27,41 @@ CMDS = {
     "smycka": ["ab-loop"],
     "test":   ["show-text", "Ovládání z telefonu funguje"],
 }
+
+REAR = {  # parametry filtru "5.1 EQ (místnost)"
+    "zadni-zap": ([("fl_mix:Gain 2", 0.0), ("fr_mix:Gain 2", 0.0), ("rl_gain:Gain 1", 1.0), ("rr_gain:Gain 1", 1.0)], "Zadní: ZAP"),
+    "zadni-vyp": ([("fl_mix:Gain 2", 0.707), ("fr_mix:Gain 2", 0.707), ("rl_gain:Gain 1", 0.0), ("rr_gain:Gain 1", 0.0)], "Zadní: VYP (hrají sloupy)"),
+}
+
+
+def mpv_send(cmd):
+    s = socket.socket(socket.AF_UNIX)
+    s.settimeout(2)
+    s.connect(SOCK)
+    s.sendall((json.dumps({"command": cmd}, ensure_ascii=False) + "\n").encode())
+    s.close()
+
+
+if len(sys.argv) == 2 and sys.argv[1] in REAR:
+    params, text = REAR[sys.argv[1]]
+    dump = json.loads(subprocess.run(["pw-dump"], capture_output=True, text=True).stdout or "[]")
+    node = next((o["id"] for o in dump
+                 if o.get("type", "").endswith(":Node")
+                 and o.get("info", {}).get("props", {}).get("node.name") == "room_eq_21"), None)
+    if node is None:
+        print("Filtr room_eq_21 neběží (spusť ./setup.sh 5.1)")
+        sys.exit(1)
+    body = " ".join(f'"{k}" {v}' for k, v in params)
+    r = subprocess.run(["pw-cli", "s", str(node), "Props", "{ params = [ " + body + " ] }"], capture_output=True, text=True)
+    if r.returncode:
+        print(r.stderr or r.stdout)
+        sys.exit(1)
+    try:
+        mpv_send(["show-text", text])
+    except OSError:
+        pass
+    print(text)
+    sys.exit(0)
 
 if len(sys.argv) != 2 or sys.argv[1] not in CMDS:
     print(__doc__)

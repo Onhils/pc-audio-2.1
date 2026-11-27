@@ -15,7 +15,9 @@ Všechno se zapojuje **vzadu do počítače, přímo do základní desky**. Nikd
 | 🟠 **oranžový** jack v PC: **bílý** cinch | **Penta → vstup CENTRE** (je prázdný, jen ať se nepovaluje) |
 | **Penta → SUBWOOFER OUT** | **Y kabel** → oba cinch vstupy na subu |
 | **Penta → SPEAKER OUT FRONT** | sloupy Mythos Four (červená na červenou, černá na černou) |
-| **Penta → CENTER SPEAKER OUT** | centr Mythos Three (jen v režimu 3.1, viz níž) |
+| **Penta → CENTER SPEAKER OUT** | centr Mythos Three (jen v režimu 3.1 a 5.1, viz níž) |
+| ⚫ **černý** jack v PC | **Penta → INPUT REAR** (jen v režimu 5.1) |
+| **Penta → SPEAKER OUT REAR** | 2× Mythos Five za postelí (jen v režimu 5.1) |
 
 ```
 PC zelený ─────────────► Penta INPUT FRONT ──► sloupy
@@ -68,6 +70,19 @@ Ve 3.1 jdou v **mpv** během filmu přepínat dialogy: **F1** = z centru, **F2**
 📱 **Z telefonu:** aplikace **KDE Connect** (spárovaná s PC přes GSConnect) → tvůj počítač → **Spustit příkaz**. Najdeš tam: Dialogy CENTR / SLOUPY / MIX, Zpět 5 s, Pauza, **Smyčka** (1× začátek, 2× konec → úsek se pořád opakuje, 3× zrušit). `setup.sh` to nastaví sám, když je telefon spárovaný.
 
 Po přepnutí na 3.1 jednou spusť `./kalibrace.sh`, vyber **5) Hlasitost CENTRU** a točením **PRE LEVEL CENTRE** vzadu na Pentě srovnej centr se sloupy.
+
+## 🔈 Režim 5.1 (zadní Mythos Five) – připraveno, zatím nevyzkoušeno naživo
+
+1. **Nejdřív provizorně:** postav Mythos Five za hlavu postele, co nejvýš (50–100 cm nad uši), natoč je přes postel dopředu, ne přímo do uší.
+2. Zapoj **černý jack** z PC → **Penta INPUT REAR**, reproduktory → **Penta SPEAKER OUT REAR**.
+3. Změř metrem: **hlava → sloup** a **hlava → zadní reproduktor** (v metrech). Zpoždění = (sloup − zadní) ÷ 0,343 → milisekundy. Příklad: 3,8 m a 0,9 m → (3,8 − 0,9) ÷ 0,343 ≈ **8 ms**.
+4. Spusť (8 nahraď svým číslem):
+   ```bash
+   cd ~/pc-audio-2.1 && REAR_DELAY_MS=8 ./setup.sh 5.1
+   ```
+5. `./kalibrace.sh` → **6) Hlasitost ZADNÍCH**: točíš **PRE LEVEL REAR** na Pentě, dokud zadní neukazují stejně dB jako sloupy.
+6. Na telefonu je **Zadní: ZAP / VYP** – vypnuté zadní se přimíchají do sloupů. Ideální na porovnání ve stejné scéně (se smyčkou).
+7. Nelíbí se? `./setup.sh 3.1` a je to zpátky.
 
 ## 🔊 Krok 4: Zkontroluj
 
