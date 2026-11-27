@@ -63,6 +63,8 @@ cd ~/pc-audio-2.1 && ./setup.sh 3.1     # zapnout centr
 cd ~/pc-audio-2.1 && ./setup.sh 2.1     # zpátky bez centru
 ```
 
+Ve 3.1 jdou v **mpv** během filmu přepínat dialogy: **F1** = z centru, **F2** = ze sloupů (jako 2.1), **F3** = mix. Hodí se na srovnání ve stejné scéně.
+
 Po přepnutí na 3.1 jednou spusť `./kalibrace.sh`, vyber **5) Hlasitost CENTRU** a točením **PRE LEVEL CENTRE** vzadu na Pentě srovnej centr se sloupy.
 
 ## 🔊 Krok 4: Zkontroluj

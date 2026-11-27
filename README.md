@@ -39,8 +39,8 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 |---|---|---|
 | profil karty | Analog Surround 2.1 | Analog Surround 5.1 (zadní kanály nepoužité; karta 3.1 neumí) |
 | centr | zamíchán do sloupů (mpv, −3 dB) | oranžový jack hrot → bílý cinch → Penta CENTRE → Mythos Three |
-| bass management | PipeWire upmix `lfe-cutoff = 200` (jen stereo), mpv míchá 5.1 do sterea | filtr „3.1 EQ“: LFE = LR4 100 Hz z (0,5·FL + 0,5·FR + 0,707·FC) + LFE stopa; centr LR4 horní propust 100 Hz; PipeWire upmix vypnutý |
-| mpv | `pan=stereo` + alimiter 0,7 | `pan=3.1` (FL/FR + surroundy, FC, LFE 0,7) + alimiter 0,7 |
+| bass management | PipeWire upmix `lfe-cutoff = 200` (jen stereo), mpv míchá 5.1 do sterea | filtr „3.1 EQ“: LFE = LR4 100 Hz z (0,5·FL + 0,5·FR) + LR4 80 Hz z 0,707·FC + LFE stopa; centr LR4 horní propust **80 Hz** (se 100 Hz zněly dialogy dutě); PipeWire upmix vypnutý |
+| mpv | `pan=stereo` + alimiter 0,7 | `pan=3.1` (FL/FR + surroundy, FC, LFE 0,7) + alimiter 0,7; klávesy **F1/F2/F3** = dialogy centr / sloupy / mix (A/B) |
 | konfigurace | [`modes/2.1`](modes/2.1) | [`modes/3.1`](modes/3.1) |
 
 - PipeWire `lfe-cutoff` filtr je přesně **LR4 na cutoff/2** (změřeno: 50/70/90/110/150 Hz = −0,5/−1,9/−4,4/−7,8/−15,6 dB pro 200), proto 3.1 filtr (LR4 @ 100 Hz) dává subu stejnou křivku a úroveň – kalibrace subu i fáze platí v obou režimech.

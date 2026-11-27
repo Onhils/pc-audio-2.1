@@ -69,6 +69,6 @@ for line in out.splitlines():
 ok = v[("stereo 50 Hz", "LFE")] > -4 and v[("stereo 1 kHz", "LFE")] < -40 and v[("stereo 1 kHz", "FL")] > -2
 if mode == "3.1":
     ok = ok and v[("stereo 1 kHz", "FC")] < -60 and v[("centr 1 kHz", "FC")] > -2 \
-            and v[("centr 1 kHz", "LFE")] < -40 and v[("centr 50 Hz", "LFE")] > v[("centr 50 Hz", "FC")] + 10
+            and v[("centr 1 kHz", "LFE")] < -40 and v[("centr 50 Hz", "LFE")] > v[("centr 50 Hz", "FC")] + 3
 sys.exit(0 if ok else 1)
 EOF

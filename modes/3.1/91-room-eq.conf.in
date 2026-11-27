@@ -2,9 +2,10 @@
 # Virtuální výstup "3.1 EQ (místnost)" -> ALSA 5.1 výstup (zadní kanály nepoužité).
 #
 # Bass management (dělá se tady, NE v PipeWire upmixu – ten v 3.1 vypnutý):
-#   LFE = LR4 dolní propust 100 Hz z (0.5*FL + 0.5*FR + 0.707*FC) + LFE stopa
-#   (LR4 @ 100 Hz = přesně stejná křivka jako lfe-cutoff=200 ve 2.1 -> kalibrace subu platí dál)
-#   centr: LR4 horní propust 100 Hz (malý reproduktor, basy jdou do subu)
+#   LFE = LR4 dolní propust 100 Hz z (0.5*FL + 0.5*FR)          (= stejná křivka jako lfe-cutoff=200 ve 2.1)
+#       + LR4 dolní propust 80 Hz z 0.707*FC                      (basy centru)
+#       + LFE stopa
+#   centr: LR4 horní propust 80 Hz (Mythos Three hraje do ~45 Hz; 100 Hz bralo hlasu „tělo“ -> dutý zvuk)
 #   sloupy: plné pásmo (jako ve 2.1)
 # Ekvalizace místnosti (měřeno z postele 2026-11-27): 70 Hz -9 dB Q5, 120 Hz -10 dB Q4.
 context.modules = [
@@ -19,13 +20,15 @@ context.modules = [
                 { type = builtin name = in_fr label = copy }
                 { type = builtin name = in_fc label = copy }
                 # basy do subu
-                { type = builtin name = bass_sum label = mixer control = { "Gain 1" = 0.5 "Gain 2" = 0.5 "Gain 3" = 0.707 } }
+                { type = builtin name = bass_sum label = mixer control = { "Gain 1" = 0.5 "Gain 2" = 0.5 } }
                 { type = builtin name = bass_lp1 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
                 { type = builtin name = bass_lp2 label = bq_lowpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
-                { type = builtin name = lfe_sum  label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 1.0 } }
+                { type = builtin name = fc_lp1 label = bq_lowpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_lp2 label = bq_lowpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = lfe_sum  label = mixer control = { "Gain 1" = 1.0 "Gain 2" = 1.0 "Gain 3" = 0.707 } }
                 # centr bez basů
-                { type = builtin name = fc_hp1 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
-                { type = builtin name = fc_hp2 label = bq_highpass control = { "Freq" = 100.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_hp1 label = bq_highpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
+                { type = builtin name = fc_hp2 label = bq_highpass control = { "Freq" = 80.0 "Q" = 0.7071 } }
                 # ekvalizace místnosti
                 { type = builtin name = fl70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fl120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
@@ -41,7 +44,9 @@ context.modules = [
                 { output = "in_fr:Out" input = "fr70:In" }
                 { output = "in_fr:Out" input = "bass_sum:In 2" }
                 { output = "in_fc:Out" input = "fc_hp1:In" }
-                { output = "in_fc:Out" input = "bass_sum:In 3" }
+                { output = "in_fc:Out" input = "fc_lp1:In" }
+                { output = "fc_lp1:Out" input = "fc_lp2:In" }
+                { output = "fc_lp2:Out" input = "lfe_sum:In 3" }
                 { output = "fl70:Out"  input = "fl120:In" }
                 { output = "fr70:Out"  input = "fr120:In" }
                 { output = "fc_hp1:Out" input = "fc_hp2:In" }

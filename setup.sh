@@ -77,7 +77,7 @@ step "3/6 Kopíruju nastavení"
 backup="$HOME/.config/pc-audio-backup-$(date +%Y%m%d-%H%M%S)"
 for f in pipewire/pipewire-pulse.conf.d/90-lfe-sub.conf pipewire/client.conf.d/90-lfe-sub.conf \
          pipewire/pipewire.conf.d/91-room-eq.conf wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf \
-         mpv/mpv.conf pc-audio-mode; do
+         mpv/mpv.conf mpv/input.conf pc-audio-mode; do
   if [[ -f "$HOME/.config/$f" ]]; then mkdir -p "$backup/$(dirname "$f")"; cp "$HOME/.config/$f" "$backup/$f"; fi
 done
 if [[ -d "$backup" ]]; then ok "Stará nastavení zazálohována do $backup"; fi
@@ -86,6 +86,11 @@ install -Dm644 "$M/90-lfe-sub.conf" "$HOME/.config/pipewire/pipewire-pulse.conf.
 install -Dm644 "$M/90-lfe-sub.conf" "$HOME/.config/pipewire/client.conf.d/90-lfe-sub.conf"
 install -Dm644 "$here/common/51-analog-no-suspend.conf" "$HOME/.config/wireplumber/wireplumber.conf.d/51-analog-no-suspend.conf"
 install -Dm644 "$M/mpv.conf" "$HOME/.config/mpv/mpv.conf"
+if [[ -f "$M/input.conf" ]]; then
+  install -Dm644 "$M/input.conf" "$HOME/.config/mpv/input.conf"
+elif grep -qs "^# pc-audio" "$HOME/.config/mpv/input.conf"; then
+  rm -f "$HOME/.config/mpv/input.conf"
+fi
 mkdir -p "$HOME/.config/pipewire/pipewire.conf.d"
 sed "s|@SINK@|$sink|" "$M/91-room-eq.conf.in" > "$HOME/.config/pipewire/pipewire.conf.d/91-room-eq.conf"
 echo "$mode" > "$modefile"
@@ -93,7 +98,7 @@ ok "Basy do subu (dělení ~100 Hz)"
 ok "Ekvalizér místnosti (70 Hz, 120 Hz)"
 ok "Výstup se neuspává (žádné rušení v tichu)"
 ok "mpv: filmy 5.1/7.1 se správně smíchají do $mode"
-if [[ $mode == 3.1 ]]; then ok "Centr: bez basů (ty jdou do subu), dialogy z Mythos Three"; fi
+if [[ $mode == 3.1 ]]; then ok "Centr: basy pod 80 Hz jdou do subu, dialogy z Mythos Three"; ok "mpv klávesy: F1 = dialogy z centru, F2 = ze sloupů, F3 = mix"; fi
 
 # ---------------------------------------------------------------- 4. restart
 step "4/6 Restartuju zvuk (na chvilku ztichne všechno, co hraje)"
