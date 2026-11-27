@@ -46,6 +46,19 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 - PipeWire `lfe-cutoff` filtr je přesně **LR4 na cutoff/2** (změřeno: 50/70/90/110/150 Hz = −0,5/−1,9/−4,4/−7,8/−15,6 dB pro 200), proto 3.1 filtr (LR4 @ 100 Hz) dává subu stejnou křivku a úroveň – kalibrace subu i fáze platí v obou režimech.
 - Ověřeno potichu (`scripts/selftest.sh`): stereo 1 kHz do centru nejde, centr 1 kHz jen do centru, centr 50 Hz jde hlavně do subu, LFE stopa do subu.
 
+### Kalibrace 3.1 (2026-11-27, telefon uprostřed postele)
+
+| krok | levý | centr | pravý | pozn. |
+|---|---|---|---|---|
+| start (PRE LEVEL CENTRE výchozí, tiše) | 41 | 35 | 42 | moc potichu na měření |
+| Penta hlasitěji, CENTRE +¼ otáčky | 70 | 67 | 70 | CENTRE už na maximu |
+| PRE LEVEL FRONT dolů | 68 | 66,5 | 68 | |
+| PRE LEVEL FRONT ještě maličko dolů | **67** | **66,5** | **65** | ✓ |
+
+- **PRE LEVEL CENTRE = max**, **PRE LEVEL FRONT ≈ pod 80 %** (stažen, aby se sloupy srovnaly s centrem).
+- Sub pak přeladěn na nové sloupy (90 Hz): 67/61 → 64/61 → 63/61 → **62/61** ✓ (knob subu dolů). Fáze 180° beze změny (dělení subu je stejné).
+- Poměr sub/sloupy platí i pro `./setup.sh 2.1` – zpět na 2.1 jde bez nové kalibrace.
+
 ## Hlavní zjištění
 
 1. **PipeWire ve výchozím stavu neposílá do LFE nic ze stereo zdrojů.** `channelmix.lfe-cutoff = 0` = žádné LFE. Musí se nastavit nenulová hodnota.
