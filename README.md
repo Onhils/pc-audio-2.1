@@ -14,6 +14,15 @@ PC (Realtek ALC1220, profil Analog Surround 2.1)
 - Mythos Four jsou štíhlé sloupy, basy mají omezené: Sound & Vision naměřil **−3 dB @ 104 Hz, −6 dB @ 90 Hz** (výrobce udává 35 Hz – 30 kHz, měření tomu neodpovídá).
 - **Penta knob ovládá jen sloupy** – sub jde z PC napřímo. Penta proto zůstává na pevné poloze a celková hlasitost se ovládá v PC (mění obojí stejně).
 
+### Hlasitost (filmy mají různou výchozí hlasitost)
+
+1. Pentu nastavit „nahoru“ na pevnou polohu: nejtišší film při hlasitosti PC 100 % = nejhlasitěji, jak kdy chceme poslouchat.
+2. Při této poloze Penty jednou srovnat sub z postele (`scripts/tones.py align`).
+3. Dál už jen hlasitost v PC (klávesy / GNOME) – sloupy i sub se mění stejně a poměr drží. Platí pro filmy i hudbu se subem.
+4. mpv má `volume-max=100` – zesílení nad 100 % by šlo za limiter a mohlo ořezávat.
+
+Downmix v mpv filmy ztlumí cca o 6 dB (rezerva proti ořezu) – proto je potřeba Penta výš než dřív.
+
 ## Místnost
 
 ```
