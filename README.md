@@ -54,7 +54,7 @@ PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
 | Část | Hodnota |
 |---|---|
 | PipeWire | `channelmix.upmix = true`, `channelmix.lfe-cutoff = 200` (reálně ~100 Hz) – [`config/pipewire`](config/pipewire) |
-| mpv | 5.1/7.1 → stereo downmix (centr/surroundy −3 dB, LFE stopa +3 dB) + `alimiter` 0.9; basy do subu pak dělá PipeWire stejně jako u hudby – [`config/mpv/mpv.conf`](config/mpv/mpv.conf) |
+| mpv | 5.1/7.1 → stereo downmix (centr/surroundy −3 dB, LFE stopa +3 dB) + `alimiter` 0.8; basy do subu pak dělá PipeWire stejně jako u hudby – [`config/mpv/mpv.conf`](config/mpv/mpv.conf) |
 | Velodyne | line vstupy (Y kabel z Penta SUB OUT), **Subwoofer Direct**, fáze **180°** (z postele hlasitější na 80/100 Hz), hlasitost srovnaná se sloupy na 90 Hz z postele (2026-11-27, po přepojení přes Pentu) |
 | Ceratec Penta | hlavní ovládání hlasitosti (sloupy i sub) |
 | Hlasitost PC | 100 % natrvalo |
