@@ -39,12 +39,11 @@ PC oranžový ─ červený ─► Penta SUB in
 2. Zkopíruj celý tenhle řádek, vlož ho do terminálu (**Ctrl+Shift+V**) a zmáčkni **Enter**:
 
 ```bash
-sudo dnf install -y git gh && gh auth login -h github.com -w && gh repo clone Onhils/pc-audio-2.1 ~/pc-audio-2.1 && ~/pc-audio-2.1/setup.sh
+sudo dnf install -y git && git clone https://github.com/Onhils/pc-audio-2.1 ~/pc-audio-2.1 && ~/pc-audio-2.1/setup.sh
 ```
 
 3. **Heslo:** zeptá se na heslo k počítači. Napiš ho a zmáčkni Enter. Při psaní se nic nezobrazuje, to je normální. 🙈
-4. **GitHub:** ukáže kód (třeba `ABCD-1234`) a otevře prohlížeč. Přihlas se, vlož kód a potvrď. Je to potřeba, protože repozitář je soukromý.
-5. Počkej, až se objeví **„6/6 HOTOVO 🎉“**. Všechny řádky mají mít zelenou fajfku ✓.
+4. Počkej, až se objeví **„6/6 HOTOVO 🎉“**. Všechny řádky mají mít zelenou fajfku ✓.
 
 > Když už složka `~/pc-audio-2.1` existuje (spouštíš to podruhé), stačí:
 > ```bash
