@@ -100,6 +100,28 @@ ok "Výstup se neuspává (žádné rušení v tichu)"
 ok "mpv: filmy 5.1/7.1 se správně smíchají do $mode"
 if [[ $mode == 3.1 ]]; then ok "Centr: basy pod 80 Hz jdou do subu, dialogy z Mythos Three"; ok "mpv klávesy: F1 = dialogy z centru, F2 = ze sloupů, F3 = mix"; fi
 
+# ovládání mpv z telefonu (GSConnect / KDE Connect)
+install -Dm755 "$here/common/mpv-ovladac" "$HOME/.local/bin/mpv-ovladac"
+phones=0
+if command -v dconf >/dev/null && [[ -n "$(dconf read /org/gnome/shell/extensions/gsconnect/devices 2>/dev/null)" ]]; then
+  bin="$HOME/.local/bin/mpv-ovladac"
+  list="{"
+  i=0
+  for pair in "centr:Dialogy: CENTR" "sloupy:Dialogy: SLOUPY" "mix:Dialogy: MIX" "zpet:Zpět 5 s" "pauza:Pauza / přehrát" "smycka:Smyčka (začátek / konec / zrušit)"; do
+    i=$((i+1)); cmd=${pair%%:*}; name=${pair#*:}
+    list+="'pc-audio-$i': <{'name': <'$name'>, 'command': <'$bin $cmd'>}>, "
+  done
+  list="${list%, }}"
+  for d in $(dconf read /org/gnome/shell/extensions/gsconnect/devices | tr -d "[]',"); do
+    [[ "$(dconf read /org/gnome/shell/extensions/gsconnect/device/$d/type)" == "'phone'" ]] || continue
+    [[ "$(dconf read /org/gnome/shell/extensions/gsconnect/device/$d/paired)" == "true" ]] || continue
+    dconf write "/org/gnome/shell/extensions/gsconnect/device/$d/plugin/runcommand/command-list" "$list"
+    phones=$((phones+1))
+    ok "Telefon $(dconf read /org/gnome/shell/extensions/gsconnect/device/$d/name): příkazy pro mpv v KDE Connect → Spustit příkaz"
+  done
+fi
+[[ $phones -gt 0 ]] || warn "Ovládání z telefonu: žádný spárovaný telefon v GSConnect (nevadí, jde to doplnit později)"
+
 # ---------------------------------------------------------------- 4. restart
 step "4/6 Restartuju zvuk (na chvilku ztichne všechno, co hraje)"
 systemctl --user restart pipewire pipewire-pulse wireplumber

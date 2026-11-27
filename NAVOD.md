@@ -65,6 +65,8 @@ cd ~/pc-audio-2.1 && ./setup.sh 2.1     # zpátky bez centru
 
 Ve 3.1 jdou v **mpv** během filmu přepínat dialogy: **F1** = z centru, **F2** = ze sloupů (jako 2.1), **F3** = mix. Hodí se na srovnání ve stejné scéně.
 
+📱 **Z telefonu:** aplikace **KDE Connect** (spárovaná s PC přes GSConnect) → tvůj počítač → **Spustit příkaz**. Najdeš tam: Dialogy CENTR / SLOUPY / MIX, Zpět 5 s, Pauza, **Smyčka** (1× začátek, 2× konec → úsek se pořád opakuje, 3× zrušit). `setup.sh` to nastaví sám, když je telefon spárovaný.
+
 Po přepnutí na 3.1 jednou spusť `./kalibrace.sh`, vyber **5) Hlasitost CENTRU** a točením **PRE LEVEL CENTRE** vzadu na Pentě srovnej centr se sloupy.
 
 ## 🔊 Krok 4: Zkontroluj

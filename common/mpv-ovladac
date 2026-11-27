@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Ovládání běžícího mpv z telefonu (GSConnect / KDE Connect „Spustit příkaz“) nebo z terminálu.
+
+  mpv-ovladac centr|sloupy|mix     dialogy z centru / ze sloupů / mix (jen 3.1, filmy 5.1)
+  mpv-ovladac zpet                 o 5 s zpět
+  mpv-ovladac pauza                pauza / přehrát
+  mpv-ovladac smycka               opakování úseku: 1× = začátek, 2× = konec (pak se úsek
+                                   pořád opakuje), 3× = zrušit opakování
+
+Komunikuje přes IPC socket mpv (input-ipc-server=~~/socket v mpv.conf).
+"""
+import json
+import os
+import socket
+import sys
+
+SOCK = os.path.expanduser("~/.config/mpv/socket")
+CMDS = {
+    "centr":  ["keypress", "F1"],
+    "sloupy": ["keypress", "F2"],
+    "mix":    ["keypress", "F3"],
+    "zpet":   ["seek", -5],
+    "pauza":  ["cycle", "pause"],
+    "smycka": ["ab-loop"],
+}
+
+if len(sys.argv) != 2 or sys.argv[1] not in CMDS:
+    print(__doc__)
+    sys.exit(2)
+
+try:
+    s = socket.socket(socket.AF_UNIX)
+    s.settimeout(2)
+    s.connect(SOCK)
+    s.sendall((json.dumps({"command": CMDS[sys.argv[1]]}) + "\n").encode())
+    if sys.argv[1] == "smycka":
+        s.sendall(b'{"command": ["show-text", "Smyčka: ${ab-loop-a} -> ${ab-loop-b}"]}\n')
+    s.close()
+except OSError as e:
+    print(f"mpv neběží nebo nemá zapnuté ovládání ({e})")
+    sys.exit(1)
