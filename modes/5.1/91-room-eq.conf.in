@@ -8,7 +8,7 @@
 #   Výpočet: (vzdálenost hlava→sloup − hlava→zadní) v metrech / 0.343 = ms.
 # Zadní zap/vyp za běhu (mpv-ovladac zadni-zap / zadni-vyp, z telefonu):
 #   vyp = zadní ztichnou a jejich zvuk se přimíchá do sloupů (-3 dB), jako ve 3.1.
-# Ekvalizace místnosti (z postele 2026-11-27) jen na sloupy/centr/sub: 70 Hz -9 dB Q5, 120 Hz -10 dB Q4.
+# Ekvalizace místnosti (z postele 2026-11-27) jen na sloupy/centr/sub: 37 Hz -4 dB Q3 (2026-11-27 večer: hluboké dunění při vyšší hlasitosti), 70 Hz -9 dB Q5, 120 Hz -10 dB Q4.
 context.modules = [
 {   name = libpipewire-module-filter-chain
     args = {
@@ -44,11 +44,14 @@ context.modules = [
                 { type = builtin name = rl_gain label = mixer control = { "Gain 1" = 1.0 } }
                 { type = builtin name = rr_gain label = mixer control = { "Gain 1" = 1.0 } }
                 # ekvalizace místnosti
+                { type = builtin name = fl37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
                 { type = builtin name = fl70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fl120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fr37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
                 { type = builtin name = fr70   label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fr120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
                 { type = builtin name = fc120  label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = lfe37 label = bq_peaking control = { "Freq" = 37.0  "Q" = 3.0 "Gain" = -4.0 } }
                 { type = builtin name = lfe70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = lfe120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
             ]
@@ -67,8 +70,10 @@ context.modules = [
                 { output = "in_fc:Out" input = "fc_lp1:In" }
                 { output = "fc_lp1:Out" input = "fc_lp2:In" }
                 { output = "fc_lp2:Out" input = "lfe_sum:In 3" }
-                { output = "fl_mix:Out" input = "fl70:In" }
-                { output = "fr_mix:Out" input = "fr70:In" }
+                { output = "fl_mix:Out" input = "fl37:In" }
+                { output = "fl37:Out" input = "fl70:In" }
+                { output = "fr_mix:Out" input = "fr37:In" }
+                { output = "fr37:Out" input = "fr70:In" }
                 { output = "fl70:Out"  input = "fl120:In" }
                 { output = "fr70:Out"  input = "fr120:In" }
                 { output = "fc_hp1:Out" input = "fc_hp2:In" }
@@ -82,7 +87,8 @@ context.modules = [
                 { output = "bass_sum:Out" input = "bass_lp1:In" }
                 { output = "bass_lp1:Out" input = "bass_lp2:In" }
                 { output = "bass_lp2:Out" input = "lfe_sum:In 1" }
-                { output = "lfe_sum:Out"  input = "lfe70:In" }
+                { output = "lfe_sum:Out" input = "lfe37:In" }
+                { output = "lfe37:Out" input = "lfe70:In" }
                 { output = "lfe70:Out"    input = "lfe120:In" }
             ]
             inputs  = [ "in_fl:In" "in_fr:In" "in_fc:In" "lfe_sum:In 2" "in_rl:In" "in_rr:In" ]

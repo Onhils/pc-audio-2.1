@@ -127,7 +127,7 @@ Krokové tóny 8 s, stereo cestou jako hudba (sloupy + sub), Penta ~1 hodina.
 | EQ −9@70, −10@120 | 66 | 70 | 71 | 67,8 | 63 | 64 | 68 | 67 | 66,5 | 65 | 68,5 |
 
 - 70 a 120 Hz srovnané (±2 dB = přesnost telefonu).
-- 35–40 Hz +4–5 dB (zesílení místností) – ponecháno.
+- 35–40 Hz +4–5 dB (zesílení místností) – nejdřív ponecháno; po hodinách poslechu hudby při vyšší hlasitosti „hluboce dunělo“ → **37 Hz −4 dB (Q3)** (35 Hz −3,6, 40 Hz −3,3, 50 Hz jen −0,9 dB).
 - 50 Hz díra −3 dB – EQ nezvedá (minimum místnosti), řešitelné jen přesunem subu/postele.
 - Sub uprostřed stěny je ve čtvercové místnosti dobrá poloha (roh by módy zesílil) – nestěhováno.
 

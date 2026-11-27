@@ -125,7 +125,7 @@ V nabídce jdi popořadě:
 
 - Najde zvukovou kartu a přepne ji na **2.1**, nebo pro **3.1** na 5.1 profil (zadní kanály zůstanou prázdné).
 - Basy pod **~100 Hz** posílá do subu. Ve 2.1 přes PipeWire (`lfe-cutoff = 200`, protože číslo v PipeWire je dvojnásobek skutečného dělení), ve 3.1 vlastním filtrem, který navíc odebere basy z centru a pošle je do subu. Křivka je v obou režimech stejná.
-- Zapne **ekvalizér místnosti** (70 Hz −9 dB, 120 Hz −10 dB), změřený v pokoji s postelí.
+- Zapne **ekvalizér místnosti** (37 Hz −4 dB, 70 Hz −9 dB, 120 Hz −10 dB), změřený v pokoji s postelí.
 - Vypne **uspávání zvukové karty** a po každém přihlášení ji krátce „probudí“, aby v tichu nebylo slyšet rušení.
 - Nastaví **mpv**, aby filmy 5.1 správně smíchal do 2.1 a neořezával zvuk.
 - Na konci **potichu ověří**, že do subu jdou basy a výšky ne.
