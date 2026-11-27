@@ -5,40 +5,29 @@ Nastavení a poznatky z ladění 2.1 sestavy na Fedora / PipeWire (2026-11-25).
 ## Sestava
 
 ```
-PC (Realtek ALC1220, profil Analog Surround 2.1)
- ├─ zelený jack (FL/FR) ──► Ceratec Penta ──► 2× Definitive Technology Mythos Four (sloupy)
- └─ oranžový jack ──┬─ hrot  / bílý cinch  = Center (v 2.1 prázdný)
-                    └─ kroužek / červený cinch = LFE ──► Velodyne SPL Series II 1000W (vstup LFE)
+PC (Realtek ALC1220, profil Analog Surround 2.1, hlasitost PC natrvalo 100 %)
+ ├─ zelený jack (FL/FR) ──► Ceratec Penta INPUT FRONT ──► 2× Definitive Technology Mythos Four (sloupy)
+ └─ oranžový jack ──┬─ hrot  / bílý cinch  = Center (v 2.1 prázdný) ──► Penta vstup centre
+                    └─ kroužek / červený cinch = LFE ──► Penta vstup subwoofer
+                                                         Penta SUBWOOFER OUT ──Y kabel──► Velodyne SPL Series II 1000W (oba line vstupy)
 ```
 
 - Mythos Four jsou štíhlé sloupy, basy mají omezené: Sound & Vision naměřil **−3 dB @ 104 Hz, −6 dB @ 90 Hz** (výrobce udává 35 Hz – 30 kHz, měření tomu neodpovídá).
-- **Penta knob ovládá jen sloupy** – sub jde z PC napřímo. Penta proto zůstává na pevné poloze a celková hlasitost se ovládá v PC (mění obojí stejně).
+- **Sub jde přes Pentu** – SUBWOOFER OUT Penty má úroveň řízenou hlavní hlasitostí (ověřeno), takže **knob / dálkový ovladač Penty ovládá sloupy i sub současně** a poměr drží.
+- Y kabel do obou line vstupů Velodyne: sub L+R sčítá → o ~6 dB vyšší úroveň, srovnáno knobem subu.
+- Bílý cinch (prázdný centr) je ve vstupu centre Penty jen kvůli pořádku; na výstup centre speaker nic nepřipojovat.
 
-### Hlasitost (filmy mají různou výchozí hlasitost)
+### Hlasitost
 
-1. Pentu nastavit „nahoru“ na pevnou polohu: nejtišší film při hlasitosti PC 100 % = nejhlasitěji, jak kdy chceme poslouchat.
-2. Při této poloze Penty jednou srovnat sub z postele (`scripts/tones.py align`).
-3. Dál už jen hlasitost v PC (klávesy / GNOME) – sloupy i sub se mění stejně a poměr drží. Platí pro filmy i hudbu se subem.
-4. mpv má `volume-max=100` – zesílení nad 100 % by šlo za limiter a mohlo ořezávat.
+- **PC natrvalo 100 %**, hlasitost se ovládá **jen Pentou** (knob nebo dálkový ovladač z postele).
+- Penta má vysokou citlivost (plný výkon od 200 mV); kdyby hlasité pasáže zkreslovaly, snížit jednou natrvalo hlasitost PC (např. 70–80 %).
+- Downmix v mpv ztlumí filmy cca o 6 dB (rezerva proti ořezu) – vyrovná se Pentou.
+- mpv má `volume-max=100` – zesílení nad 100 % by šlo za limiter a mohlo ořezávat.
 
-Downmix v mpv filmy ztlumí cca o 6 dB (rezerva proti ořezu) – proto je potřeba Penta výš než dřív.
+### Z manuálů
 
-## Místnost
-
-```
-              stěna se sloupy
-   ┌────────────────────────────────────┐
-   │ [stůl]  ▮Mythos   [SUB]   Mythos▮  │
-   │                                    │
-   │                                  okno
-   │                                    │
-dveře                                   │
-   │            [ postel ]              │
-   └────────────────────────────────────┘
-```
-
-- Čtvercová místnost → módy v obou osách na stejných frekvencích, velké rozdíly basů podle místa (u okna hodně, u dveří málo).
-- Hlavní poslechové místo: **postel** (filmy, projektor Optoma UHD40 na stěnu se sloupy).
+- **Penta:** 5× 80 W (max 120 W) @ 4 Ω, citlivost 200 mV–1,5 V, vstupní impedance 47 kΩ, THD+N 0,08 %, SNR 96 dB, PRE LEVEL trimry vzadu, SUBWOOFER OUT řízený hlasitostí.
+- **Velodyne SPL II:** low-pass 40–120 Hz (12 dB/okt. počáteční, 48 dB/okt. konečný), bypass „Subwoofer Direct“ pro externě filtrovaný signál; pro malé reproduktory doporučuje dělení 100–120 Hz; všechny vstupy se sčítají; optimum výkonu typicky v rohu.
 
 ## Hlavní zjištění
 
@@ -64,8 +53,9 @@ dveře                                   │
 |---|---|
 | PipeWire | `channelmix.upmix = true`, `channelmix.lfe-cutoff = 200` (reálně ~100 Hz) – [`config/pipewire`](config/pipewire) |
 | mpv | 5.1/7.1 → stereo downmix (centr/surroundy −3 dB, LFE stopa +3 dB) + `alimiter` 0.9; basy do subu pak dělá PipeWire stejně jako u hudby – [`config/mpv/mpv.conf`](config/mpv/mpv.conf) |
-| Velodyne | vstup **LFE**, **Subwoofer Direct** (bez interního crossoveru), fáze **180°**, hlasitost srovnaná se sloupy na 90 Hz z postele |
-| Ceratec Penta | pevná poloha knobu |
+| Velodyne | line vstupy (Y kabel z Penta SUB OUT), **Subwoofer Direct**, fáze **180°** (z postele hlasitější na 80/100 Hz), hlasitost srovnaná se sloupy na 90 Hz z postele (2026-11-27, po přepojení přes Pentu) |
+| Ceratec Penta | hlavní ovládání hlasitosti (sloupy i sub) |
+| Hlasitost PC | 100 % natrvalo |
 | EasyEffects | nepoužívá se (smazáno) |
 
 Instalace: `./install.sh`
