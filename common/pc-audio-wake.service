@@ -1,0 +1,15 @@
+# Po přihlášení krátce „probudí“ výstup (1 s ticha přes ekvalizér). Uspávání je vypnuté,
+# ale po startu je výstup uspaný, dokud poprvé nic nezahraje – a v tu dobu by Penta
+# zesilovala rušení z vypnuté zvukové karty.
+[Unit]
+Description=Probudit zvukový výstup (pc-audio, proti rušení v tichu)
+After=wireplumber.service pipewire-pulse.service
+Wants=wireplumber.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/sleep 5
+ExecStart=/usr/bin/pw-play --target room_eq_21 %h/.local/share/pc-audio/silence.wav
+
+[Install]
+WantedBy=default.target

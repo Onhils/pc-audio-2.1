@@ -109,6 +109,14 @@ retry pactl set-sink-volume room_eq_21 100% || warn "Hlasitost ekvalizéru nasta
 retry pactl set-sink-volume "$sink" 100%    || warn "Hlasitost výstupu nastav ručně na 100 %"
 retry pactl set-sink-mute "$sink" 0         || true
 ok "Výchozí výstup: $mode EQ (místnost), hlasitost PC 100 %"
+# probudit výstup hned teď i po každém přihlášení (jinak je do prvního zvuku uspaný -> rušení)
+mkdir -p "$HOME/.local/share/pc-audio"
+python3 -c 'import wave,sys; w=wave.open(sys.argv[1],"w"); w.setnchannels(2); w.setsampwidth(2); w.setframerate(48000); w.writeframes(b"\0"*48000*4)' "$HOME/.local/share/pc-audio/silence.wav"
+install -Dm644 "$here/common/pc-audio-wake.service" "$HOME/.config/systemd/user/pc-audio-wake.service"
+systemctl --user daemon-reload
+systemctl --user enable pc-audio-wake.service >/dev/null 2>&1 || warn "Nepodařilo se zapnout probouzení po přihlášení"
+pw-play --target room_eq_21 "$HOME/.local/share/pc-audio/silence.wav" || true
+ok "Výstup probuzený (i po každém přihlášení)"
 
 # ---------------------------------------------------------------- 5. autotest
 step "5/6 Kontroluju potichu, že basy jdou do subu (do reproduktorů nic nejde)"
