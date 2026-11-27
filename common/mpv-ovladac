@@ -4,6 +4,7 @@
   mpv-ovladac centr|sloupy|mix     dialogy z centru / ze sloupů / mix (jen 3.1, filmy 5.1)
   mpv-ovladac zpet                 o 5 s zpět
   mpv-ovladac pauza                pauza / přehrát
+  mpv-ovladac test                 jen ukáže v obraze nápis (ověření spojení)
   mpv-ovladac smycka               opakování úseku: 1× = začátek, 2× = konec (pak se úsek
                                    pořád opakuje), 3× = zrušit opakování
 
@@ -22,6 +23,7 @@ CMDS = {
     "zpet":   ["seek", -5],
     "pauza":  ["cycle", "pause"],
     "smycka": ["ab-loop"],
+    "test":   ["show-text", "Ovládání z telefonu funguje"],
 }
 
 if len(sys.argv) != 2 or sys.argv[1] not in CMDS:
@@ -34,7 +36,8 @@ try:
     s.connect(SOCK)
     s.sendall((json.dumps({"command": CMDS[sys.argv[1]]}) + "\n").encode())
     if sys.argv[1] == "smycka":
-        s.sendall(b'{"command": ["show-text", "Smyčka: ${ab-loop-a} -> ${ab-loop-b}"]}\n')
+        msg = {"command": ["show-text", "Smyčka: ${ab-loop-a} -> ${ab-loop-b}"]}
+        s.sendall((json.dumps(msg, ensure_ascii=False) + "\n").encode())
     s.close()
 except OSError as e:
     print(f"mpv neběží nebo nemá zapnuté ovládání ({e})")
