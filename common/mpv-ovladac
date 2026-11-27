@@ -3,6 +3,7 @@
 
   mpv-ovladac centr|sloupy|mix     dialogy z centru / ze sloupů / mix (jen 3.1, filmy 5.1)
   mpv-ovladac zadni-zap|zadni-vyp  zadní reproduktory zap / vyp (vyp = přimíchat do sloupů; jen 5.1)
+  mpv-ovladac 220-zap|220-vyp      ubrat 220 Hz ve sloupech o 6 dB / vrátit (A/B „nafouklosti“, všechny režimy)
   mpv-ovladac zpet                 o 5 s zpět
   mpv-ovladac pauza                pauza / přehrát
   mpv-ovladac test                 jen ukáže v obraze nápis (ověření spojení)
@@ -28,9 +29,11 @@ CMDS = {
     "test":   ["show-text", "Ovládání z telefonu funguje"],
 }
 
-REAR = {  # parametry filtru "5.1 EQ (místnost)"
+PARAMS = {  # parametry filtru room_eq_21 (zadni-* jen v 5.1)
     "zadni-zap": ([("fl_mix:Gain 2", 0.0), ("fr_mix:Gain 2", 0.0), ("rl_gain:Gain 1", 1.0), ("rr_gain:Gain 1", 1.0)], "Zadní: ZAP"),
     "zadni-vyp": ([("fl_mix:Gain 2", 0.707), ("fr_mix:Gain 2", 0.707), ("rl_gain:Gain 1", 0.0), ("rr_gain:Gain 1", 0.0)], "Zadní: VYP (hrají sloupy)"),
+    "220-zap":   ([("fl224:Gain", -6.0), ("fr224:Gain", -6.0)], "220 Hz: UBRÁNO (−6 dB)"),
+    "220-vyp":   ([("fl224:Gain", 0.0), ("fr224:Gain", 0.0)], "220 Hz: PŮVODNÍ"),
 }
 
 
@@ -42,14 +45,14 @@ def mpv_send(cmd):
     s.close()
 
 
-if len(sys.argv) == 2 and sys.argv[1] in REAR:
-    params, text = REAR[sys.argv[1]]
+if len(sys.argv) == 2 and sys.argv[1] in PARAMS:
+    params, text = PARAMS[sys.argv[1]]
     dump = json.loads(subprocess.run(["pw-dump"], capture_output=True, text=True).stdout or "[]")
     node = next((o["id"] for o in dump
                  if o.get("type", "").endswith(":Node")
                  and o.get("info", {}).get("props", {}).get("node.name") == "room_eq_21"), None)
     if node is None:
-        print("Filtr room_eq_21 neběží (spusť ./setup.sh 5.1)")
+        print("Filtr room_eq_21 neběží (spusť ./setup.sh)")
         sys.exit(1)
     body = " ".join(f'"{k}" {v}' for k, v in params)
     r = subprocess.run(["pw-cli", "s", str(node), "Props", "{ params = [ " + body + " ] }"], capture_output=True, text=True)
@@ -60,6 +63,7 @@ if len(sys.argv) == 2 and sys.argv[1] in REAR:
         mpv_send(["show-text", text])
     except OSError:
         pass
+    subprocess.run(["notify-send", "-t", "2000", "Zvuk", text], capture_output=True)  # i když nehraje mpv
     print(text)
     sys.exit(0)
 

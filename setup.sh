@@ -106,7 +106,7 @@ sed -e "s|@SINK@|$sink|" -e "s|@REAR_DELAY_S@|$rear_s|g" -e "s|@REAR_DELAY_MS@|$
 if [[ $mode == 5.1 ]]; then echo "$rear_ms" > "$delayfile"; fi
 echo "$mode" > "$modefile"
 ok "Basy do subu (dělení ~100 Hz)"
-ok "Ekvalizér místnosti (70 Hz, 120 Hz)"
+ok "Ekvalizér místnosti (38, 56, 70, 120 Hz; 220 Hz přepínatelné z telefonu)"
 ok "Výstup se neuspává (žádné rušení v tichu)"
 ok "mpv: filmy 5.1/7.1 se správně smíchají do $mode"
 if [[ $mode != 2.1 ]]; then ok "Centr: basy pod 80 Hz jdou do subu, dialogy z Mythos Three"; ok "mpv klávesy: F1 = dialogy z centru, F2 = ze sloupů, F3 = mix"; fi
@@ -119,7 +119,7 @@ if command -v dconf >/dev/null && [[ -n "$(dconf read /org/gnome/shell/extension
   bin="$HOME/.local/bin/mpv-ovladac"
   list="{"
   i=0
-  for pair in "centr:Dialogy: CENTR" "sloupy:Dialogy: SLOUPY" "mix:Dialogy: MIX" "zadni-zap:Zadní: ZAP" "zadni-vyp:Zadní: VYP (do sloupů)" "zpet:Zpět 5 s" "pauza:Pauza / přehrát" "smycka:Smyčka (začátek / konec / zrušit)"; do
+  for pair in "centr:Dialogy: CENTR" "sloupy:Dialogy: SLOUPY" "mix:Dialogy: MIX" "zadni-zap:Zadní: ZAP" "zadni-vyp:Zadní: VYP (do sloupů)" "220-zap:220 Hz: UBRAT" "220-vyp:220 Hz: PŮVODNÍ" "zpet:Zpět 5 s" "pauza:Pauza / přehrát" "smycka:Smyčka (začátek / konec / zrušit)"; do
     i=$((i+1)); cmd=${pair%%:*}; name=${pair#*:}
     list+="'pc-audio-$i': <{'name': <'$name'>, 'command': <'$bin $cmd'>}>, "
   done

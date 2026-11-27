@@ -17,16 +17,20 @@ context.modules = [
                 { type = builtin name = fl56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = fl70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fl120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fl224 label = bq_peaking control = { "Freq" = 224.0 "Q" = 4.0 "Gain" = 0.0 } }   # A/B z telefonu: 0 = vyp, -6 = zap
                 { type = builtin name = fr38 label = bq_peaking control = { "Freq" = 38.0  "Q" = 2.0 "Gain" = -7.0 } }
                 { type = builtin name = fr56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = fr70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = fr120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
+                { type = builtin name = fr224 label = bq_peaking control = { "Freq" = 224.0 "Q" = 4.0 "Gain" = 0.0 } }   # A/B z telefonu: 0 = vyp, -6 = zap
                 { type = builtin name = lfe38 label = bq_peaking control = { "Freq" = 38.0  "Q" = 2.0 "Gain" = -7.0 } }
                 { type = builtin name = lfe56 label = bq_peaking control = { "Freq" = 56.0  "Q" = 8.0 "Gain" = -5.0 } }
                 { type = builtin name = lfe70  label = bq_peaking control = { "Freq" = 70.0  "Q" = 5.0 "Gain" = -9.0 } }
                 { type = builtin name = lfe120 label = bq_peaking control = { "Freq" = 120.0 "Q" = 4.0 "Gain" = -10.0 } }
             ]
             links = [
+                { output = "fr120:Out" input = "fr224:In" }
+                { output = "fl120:Out" input = "fl224:In" }
                 { output = "lfe38:Out" input = "lfe56:In" }
                 { output = "lfe56:Out" input = "lfe70:In" }
                 { output = "fr38:Out" input = "fr56:In" }
@@ -38,7 +42,7 @@ context.modules = [
                 { output = "lfe70:Out" input = "lfe120:In" }
             ]
             inputs  = [ "fl38:In"   "fr38:In"   "lfe38:In" ]
-            outputs = [ "fl120:Out" "fr120:Out" "lfe120:Out" ]
+            outputs = [ "fl224:Out" "fr224:Out" "lfe120:Out" ]
         }
         capture.props = {
             node.name      = "room_eq_21"
